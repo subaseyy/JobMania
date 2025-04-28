@@ -47,7 +47,7 @@ A **Job Mania** designed to connect students and recruiters, developed using the
 ### 1. Backend (Node.js Server)
 
 ```bash
-cd backend
+cd Backend
 npm install
 npm run dev
 ```
@@ -59,7 +59,7 @@ Server runs on `http://localhost:5500`.
 ### 2. Admin Panel (React.js Frontend)
 
 ```bash
-cd admin
+cd Frontend
 npm install
 npm start
 ```
