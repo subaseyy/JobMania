@@ -1,12 +1,27 @@
-const express = require('express')
+require('dotenv').config(); // Load .env
 
-app = express()
+const express = require('express');
+const connectDB = require('./configs/db.config'); // MongoDB connection function
+const authRoutes = require('./routes/auth.routes'); // Your auth routes
 
-app.route('/', (req, res) => {
-    res.send('Hello World')
-}
-)
-app.listen(3000, () => {
-    console.log('Server is running on port 5500')
-}
-)
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+// Connect to MongoDB
+connectDB();
+
+// Middleware
+app.use(express.json());
+
+// Routes
+app.use('/api/auth', authRoutes);
+
+// Root route
+app.get('/', (req, res) => {
+  res.send('🚀 JobMania API is running');
+});
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+});
