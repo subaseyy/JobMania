@@ -1,6 +1,8 @@
 require('dotenv').config(); // Load .env
 
 const express = require('express');
+const cors = require('cors'); // 
+
 const connectDB = require('./configs/db.config'); // MongoDB connection function
 const authRoutes = require('./routes/auth.routes'); // Your auth routes
 
@@ -14,7 +16,11 @@ connectDB();
 app.use(express.json());
 
 // Routes
+app.use(cors({ origin: 'http://localhost:3000', credentials: true })); // ⬅️ allow frontend origin
+
 app.use('/api/auth', authRoutes);
+
+
 
 // Root route
 app.get('/', (req, res) => {
