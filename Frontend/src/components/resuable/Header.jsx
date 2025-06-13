@@ -24,12 +24,10 @@ const Header = () => {
         credentials: "include",
       });
 
-      Cookies.remove("access_token");
-      Cookies.remove("refresh_token");
-      Cookies.remove("role");
-      Cookies.remove("user_id");
-      Cookies.remove("username");
-      localStorage.removeItem("auth");
+      
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+
 
       setAuth({
         role: null,

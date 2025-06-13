@@ -21,6 +21,9 @@ if (!response.ok) {
   const errorMessage = data.message || data.error || data.detail || "Login failed";
   throw new Error(errorMessage);
 }
+
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("user", JSON.stringify(data.user));
     return data;
   } catch (error) {
     throw error;
@@ -84,6 +87,9 @@ export async function verifyOtp({ email, otp }) {
 
     const data = await response.json();
     if (!response.ok) throw new Error(data.detail || "OTP verification failed");
+
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("user", JSON.stringify(data.user));
 
     return data;
   } catch (error) {

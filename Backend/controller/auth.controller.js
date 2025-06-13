@@ -30,7 +30,10 @@ exports.signup = async (req, res) => {
       isVerified: false,
     });
 
+
     await sendOtpEmail(email, otp);
+
+    
 
     return res.status(201).json({
       status: 201,

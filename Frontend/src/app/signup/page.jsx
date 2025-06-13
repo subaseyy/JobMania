@@ -166,7 +166,7 @@ export default function Signup() {
         <OTPModal
           email={emailForOtp}
           onVerify={handleOtpVerified}
-          onClose={() => setShowOtpModal(false)}
+          onClose={() => setShowOtpModal(true)}
         />
       )}
     </AuthLayout>
