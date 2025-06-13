@@ -22,8 +22,8 @@ const userSchema = new mongoose.Schema({
 
   role: {
     type: String,
-    enum: ['user', 'company', 'admin'],
-    default: 'user',
+    enum: ['jobseeker', 'company', 'admin'],
+    default: 'jobseeker',
   },
 
   companyName: {
@@ -36,11 +36,16 @@ const userSchema = new mongoose.Schema({
     ref: 'Profile',
     default: null,
   },
-
-  isVerified: {
-    type: Boolean,
-    default: false,
-  },
+otp: {
+  type: String,
+},
+otpExpires: {
+  type: Date,
+},
+isVerified: {
+  type: Boolean,
+  default: false,
+},
 
 }, {
   timestamps: true,

@@ -17,8 +17,10 @@ export async function login({ email, password, userType }) {
     });
 
     const data = await response.json();
-    if (!response.ok) throw new Error(data.detail || "Login failed");
-
+if (!response.ok) {
+  const errorMessage = data.message || data.error || data.detail || "Login failed";
+  throw new Error(errorMessage);
+}
     return data;
   } catch (error) {
     throw error;
@@ -27,13 +29,13 @@ export async function login({ email, password, userType }) {
 
 export async function register({ name, email, password, role }) {
   try {
-    const response = await fetch(`${API_BASE}/auth/register`, {
+    const response = await fetch(`${API_BASE}/auth/signup`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        username: name,
+        name: name,
         email,
         password,
         role: role,
@@ -41,8 +43,10 @@ export async function register({ name, email, password, role }) {
     });
 
     const data = await response.json();
-    if (!response.ok) throw new Error(data.detail || "Registration failed");
-
+if (!response.ok) {
+  const errorMessage = data.message || data.error || data.detail || "Login failed";
+  throw new Error(errorMessage);
+}
     return data;
   } catch (error) {
     throw error;
@@ -51,7 +55,7 @@ export async function register({ name, email, password, role }) {
 
 export async function sendOtp({ email }) {
   try {
-    const response = await fetch(`${API_BASE}/otp/`, {
+    const response = await fetch(`${API_BASE}/auth/otp/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -70,7 +74,7 @@ export async function sendOtp({ email }) {
 
 export async function verifyOtp({ email, otp }) {
   try {
-    const response = await fetch(`${API_BASE}/otp/verify/`, {
+    const response = await fetch(`${API_BASE}/auth/verify-otp/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
