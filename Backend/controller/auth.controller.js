@@ -8,7 +8,7 @@ const JWT_SECRET = process.env.JWT_SECRET;
 // SIGNUP
 exports.signup = async (req, res) => {
   try {
-    const { name, email, password, role, companyName } = req.body;
+    const { full_name, email, password, role, companyName } = req.body;
     const existingUser = await User.findOne({ email });
 
     if (existingUser) {
@@ -20,7 +20,7 @@ exports.signup = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
-      name,
+      full_name,
       email,
       password: hashedPassword,
       role,
@@ -67,16 +67,24 @@ exports.verifyOtp = async (req, res) => {
 
     const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
 
-    return res.status(200).json({
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'Strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    };
+
+    res.cookie('token', token, cookieOptions);
+    res.cookie('role', user.role, { ...cookieOptions, httpOnly: false });
+    res.cookie('user_id', user._id.toString(), { ...cookieOptions, httpOnly: false });
+    res.cookie('full_name', user.full_name, { ...cookieOptions, httpOnly: false });
+
+     return res.status(200).json({
       message: 'Email verified successfully',
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
     });
+
+
+
   } catch (err) {
     console.error('OTP verification error:', err);
     return res.status(500).json({ message: 'Server error during OTP verification' });
@@ -104,6 +112,19 @@ exports.login = async (req, res) => {
 
     const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
 
+    const cookieOptions = {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'Strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    };
+
+    // Set token cookie
+    res.cookie('token', token, cookieOptions);
+    res.cookie('role', user.role, { ...cookieOptions, httpOnly: false });
+    res.cookie('user_id', user._id.toString(), { ...cookieOptions, httpOnly: false });
+    res.cookie('full_name', user.full_name, { ...cookieOptions, httpOnly: false });
+
     return res.status(200).json({
       status: 200,
       message: 'Login successful',
@@ -113,11 +134,23 @@ exports.login = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
-      },
-    });
+    }
+  })
 
   } catch (err) {
     console.error('Login error:', err);
     return res.status(500).json({ status: 500, message: 'Server error during login' });
   }
+};
+
+
+
+
+exports.logout = async (req, res) => {
+  res.clearCookie('token');
+  res.clearCookie('role');
+  res.clearCookie('user_id');
+  res.clearCookie('name');
+
+  return res.status(200).json({status: 200, message: 'Logged out successfully' });
 };

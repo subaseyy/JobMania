@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-  name: {
+  full_name: {
     type: String,
     required: true,
     trim: true,
@@ -45,6 +45,22 @@ otpExpires: {
 isVerified: {
   type: Boolean,
   default: false,
+},
+bg_image: {
+  type: String,
+  trim: true,
+},
+title: {
+  type: String,
+  trim: true,
+},
+company: {
+  type: String,
+  trim: true,
+},
+location: {
+  type: String,
+  trim: true,
 },
 
 }, {
