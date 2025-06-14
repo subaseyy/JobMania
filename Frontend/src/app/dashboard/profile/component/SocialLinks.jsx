@@ -1,26 +1,58 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Instagram, Twitter, Globe, SquarePen } from "lucide-react";
+import { getProfile, updateProfile } from "@/lib/api/Auth";
 
 const SocialLinks = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [links, setLinks] = useState({
-    instagram: "https://instagram.com/nishant-neupane",
-    twitter: "https://twitter.com/nishant-neupane",
-    website: "https://nishantneupane488.com.np",
+    instagram: "",
+    twitter: "",
+    website: "",
   });
+  const [loading, setLoading] = useState(true);
+
+  // Fetch profile on mount
+  useEffect(() => {
+    const fetchLinks = async () => {
+      try {
+        const res = await getProfile();
+        const { profile } = res.data;
+        const social = profile.social_links || {};
+        setLinks({
+          instagram: social.instagram || "",
+          twitter: social.twitter || "",
+          website: social.website || "",
+        });
+      } catch (err) {
+        console.error("Failed to fetch social links", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLinks();
+  }, []);
 
   const handleChange = (platform, value) => {
     setLinks((prev) => ({ ...prev, [platform]: value }));
   };
 
-  const toggleEdit = () => {
-    setIsEditing((prev) => !prev);
+  const handleSave = async () => {
+    try {
+      await updateProfile({ social_links: links });
+      setIsEditing(false);
+    } catch (err) {
+      console.error("Failed to update social links", err);
+      alert("Update failed. Please try again.");
+    }
   };
 
-  const getDisplayUrl = (url) => {
-    return url.replace(/^https?:\/\//, "");
-  };
+  const getDisplayUrl = (url) => url.replace(/^https?:\/\//, "");
+
+  if (loading) {
+    return <div className="p-6">Loading social links...</div>;
+  }
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 border border-[#D6DDEB]">
@@ -28,12 +60,14 @@ const SocialLinks = () => {
         <h3 className="font-epilogue font-[600] text-xl lead-[120%] text-[#25324B]">
           Social Links
         </h3>
-        <button
-          onClick={toggleEdit}
-          className="p-2.5 border border-[#D6DDEB] hover:bg-[#4640DE] text-[#4640DE] hover:text-white hover:border-[#4640DE] transition"
-        >
-          <SquarePen size={16} />
-        </button>
+        {!isEditing && (
+          <button
+            onClick={() => setIsEditing(true)}
+            className="p-2.5 border border-[#D6DDEB] hover:bg-[#4640DE] text-[#4640DE] hover:text-white hover:border-[#4640DE] transition"
+          >
+            <SquarePen size={16} />
+          </button>
+        )}
       </div>
 
       <div className="space-y-4">
@@ -52,14 +86,16 @@ const SocialLinks = () => {
                 className="border border-[#D6DDEB] px-3 py-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#4640DE]"
               />
             ) : (
-              <a
-                href={links.instagram}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#4640DE] hover:underline text-base"
-              >
-                {getDisplayUrl(links.instagram)}
-              </a>
+              links.instagram && (
+                <a
+                  href={links.instagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#4640DE] hover:underline text-base"
+                >
+                  {getDisplayUrl(links.instagram)}
+                </a>
+              )
             )}
           </div>
         </div>
@@ -79,14 +115,16 @@ const SocialLinks = () => {
                 className="border border-[#D6DDEB] px-3 py-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#4640DE]"
               />
             ) : (
-              <a
-                href={links.twitter}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#4640DE] hover:underline text-base"
-              >
-                {getDisplayUrl(links.twitter)}
-              </a>
+              links.twitter && (
+                <a
+                  href={links.twitter}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#4640DE] hover:underline text-base"
+                >
+                  {getDisplayUrl(links.twitter)}
+                </a>
+              )
             )}
           </div>
         </div>
@@ -106,14 +144,16 @@ const SocialLinks = () => {
                 className="border border-[#D6DDEB] px-3 py-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#4640DE]"
               />
             ) : (
-              <a
-                href={links.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#4640DE] hover:underline text-base"
-              >
-                {getDisplayUrl(links.website)}
-              </a>
+              links.website && (
+                <a
+                  href={links.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#4640DE] hover:underline text-base"
+                >
+                  {getDisplayUrl(links.website)}
+                </a>
+              )
             )}
           </div>
         </div>
@@ -122,7 +162,7 @@ const SocialLinks = () => {
       {isEditing && (
         <div className="flex justify-end mt-4">
           <button
-            onClick={toggleEdit}
+            onClick={handleSave}
             className="bg-[#4640DE] text-white px-4 py-2 rounded-md hover:bg-[#3730a3] transition"
           >
             Save

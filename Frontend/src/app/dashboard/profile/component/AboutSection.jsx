@@ -1,17 +1,42 @@
 "use client";
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { SquarePen } from "lucide-react";
+import { getProfile, updateProfile } from "@/lib/api/Auth";
 
 const AboutSection = () => {
   const [isEditing, setIsEditing] = useState(false);
-  const [aboutText, setAboutText] = useState(
-    "I'm a product designer + filmmaker currently working remotely at Twitter from beautiful Manchester, United Kingdom. I'm passionate about designing digital products that have a positive impact on the world.\n\nFor 10 years, I've specialised in interface, experience & interaction design as well as working in user research and product strategy for product agencies, big tech companies & start-ups."
-  );
-  const [tempAboutText, setTempAboutText] = useState(aboutText);
+  const [aboutText, setAboutText] = useState("");
+  const [tempAboutText, setTempAboutText] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  const handleSave = () => {
-    setAboutText(tempAboutText);
-    setIsEditing(false);
+  // Fetch profile on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await getProfile();
+        const { profile } = res.data;
+        const about = profile.about || "";
+        setAboutText(about);
+        setTempAboutText(about);
+      } catch (err) {
+        console.error("Failed to fetch about section", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleSave = async () => {
+    try {
+      await updateProfile({ about: tempAboutText });
+      setAboutText(tempAboutText);
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Failed to update about section", error);
+      alert("Update failed. Please try again.");
+    }
   };
 
   const handleCancel = () => {
@@ -22,6 +47,10 @@ const AboutSection = () => {
   const handleTextChange = (e) => {
     setTempAboutText(e.target.value);
   };
+
+  if (loading) {
+    return <div className="p-6">Loading About section...</div>;
+  }
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 border border-[#D6DDEB]">
@@ -62,7 +91,7 @@ const AboutSection = () => {
         />
       ) : (
         <p className="font-epilogue font-[400] text-base leading-[160%] text-[#515B6F] whitespace-pre-line">
-          {aboutText}
+          {aboutText || "No About section added yet."}
         </p>
       )}
     </div>

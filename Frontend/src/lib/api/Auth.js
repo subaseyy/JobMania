@@ -17,20 +17,15 @@ export async function login({ email, password, userType }) {
     });
 
     const data = await response.json();
-if (!response.ok) {
-  const errorMessage = data.message || data.error || data.detail || "Login failed";
-  throw new Error(errorMessage);
-}
+    if (!response.ok) throw new Error(data.detail || "Login failed");
 
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
     return data;
   } catch (error) {
     throw error;
   }
 }
 
-export async function register({ name, email, password, role }) {
+export async function register({ full_name, email, password, role }) {
   try {
     const response = await fetch(`${API_BASE}/auth/signup`, {
       method: "POST",
@@ -38,7 +33,7 @@ export async function register({ name, email, password, role }) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        name: name,
+        full_name: full_name,
         email,
         password,
         role: role,
@@ -86,10 +81,10 @@ export async function verifyOtp({ email, otp }) {
     });
 
     const data = await response.json();
+
     if (!response.ok) throw new Error(data.detail || "OTP verification failed");
 
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
+
 
     return data;
   } catch (error) {
@@ -99,14 +94,23 @@ export async function verifyOtp({ email, otp }) {
 
 export async function getProfile() {
   try {
+
+     const token = Cookies.get("token"); 
+
+    if (!token) throw new Error("Token is missing");
+
+
+
     const response = await fetch(`${API_BASE}/users/profile`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRFToken": Cookies.get("csrftoken"),
+        "X-CSRFToken": token,
       },
       credentials: "include",
     });
+
+
 
     const data = await response.json();
     if (!response.ok) throw new Error(data.detail || "Failed to fetch profile");
@@ -122,7 +126,7 @@ export async function updateProfile(profileData) {
     const isFormData = profileData instanceof FormData;
 
     const headers = {
-      "X-CSRFToken": Cookies.get("csrftoken"),
+      "X-CSRFToken": Cookies.get("token"),
     };
 
     // Only set Content-Type for JSON, not for FormData
@@ -148,26 +152,6 @@ export async function updateProfile(profileData) {
   }
 }
 
-export async function logout() {
-  try {
-    const response = await fetch(`${API_BASE}/logout`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-    });
-
-    if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.detail || "Logout failed");
-    }
-
-    return { success: true };
-  } catch (error) {
-    throw error;
-  }
-}
 // api/auth.js
 
 export async function submitJobApplication(jobId, coverLetter) {
@@ -192,3 +176,4 @@ export async function submitJobApplication(jobId, coverLetter) {
 
   return result;
 }
+

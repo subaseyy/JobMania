@@ -1,51 +1,82 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Plus, SquarePen, Trash2, X, Save } from "lucide-react";
+import { getProfile, updateProfile } from "@/lib/api/Auth";
 
 const SkillsSection = () => {
-  const [skills, setSkills] = useState([
-    "Communication",
-    "Analytics",
-    "Facebook Ads",
-    "Content Strategy",
-    "Community Manager",
-  ]);
-
+  const [skills, setSkills] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newSkill, setNewSkill] = useState("");
   const [editingIndex, setEditingIndex] = useState(null);
   const [editSkillValue, setEditSkillValue] = useState("");
 
-  const handleAddSkill = () => {
-    if (newSkill.trim()) {
-      setSkills([...skills, newSkill.trim()]);
-      setNewSkill("");
-      setShowAddForm(false);
+  // Fetch skills from backend
+  useEffect(() => {
+    const fetchSkills = async () => {
+      try {
+        const res = await getProfile();
+        const { profile } = res.data;
+        setSkills(profile.skills || []);
+      } catch (err) {
+        console.error("Failed to fetch skills", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSkills();
+  }, []);
+
+  // Save to backend
+  const saveSkillsToBackend = async (updatedSkills) => {
+    try {
+      await updateProfile({ skills: updatedSkills });
+    } catch (err) {
+      console.error("Failed to update skills", err);
+      alert("Could not save skills.");
     }
   };
 
-  const handleDeleteSkill = (index) => {
-    setSkills(skills.filter((_, i) => i !== index));
+  // Add new skill
+  const handleAddSkill = async () => {
+    const trimmed = newSkill.trim();
+    if (!trimmed || skills.includes(trimmed)) return;
+
+    const updatedSkills = [...skills, trimmed];
+    setSkills(updatedSkills);
+    setNewSkill("");
+    setShowAddForm(false);
+    await saveSkillsToBackend(updatedSkills);
+  };
+
+  // Delete skill
+  const handleDeleteSkill = async (index) => {
+    const updatedSkills = skills.filter((_, i) => i !== index);
+    setSkills(updatedSkills);
     if (editingIndex === index) {
       setEditingIndex(null);
       setEditSkillValue("");
     }
+    await saveSkillsToBackend(updatedSkills);
   };
 
+  // Edit existing skill
   const startEditSkill = (index) => {
     setEditingIndex(index);
     setEditSkillValue(skills[index]);
   };
 
-  const saveEditSkill = () => {
-    if (editSkillValue.trim()) {
-      const updatedSkills = [...skills];
-      updatedSkills[editingIndex] = editSkillValue.trim();
-      setSkills(updatedSkills);
-      setEditingIndex(null);
-      setEditSkillValue("");
-    }
+  const saveEditSkill = async () => {
+    const trimmed = editSkillValue.trim();
+    if (!trimmed) return;
+
+    const updatedSkills = [...skills];
+    updatedSkills[editingIndex] = trimmed;
+    setSkills(updatedSkills);
+    setEditingIndex(null);
+    setEditSkillValue("");
+    await saveSkillsToBackend(updatedSkills);
   };
 
   const cancelEdit = () => {
@@ -53,31 +84,32 @@ const SkillsSection = () => {
     setEditSkillValue("");
   };
 
+  if (loading) return <div className="p-6">Loading skills...</div>;
+
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 border border-[#D6DDEB]">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="font-epilogue font-semibold text-xl text-[#25324B] leading-[160%]">
-          Skills
-        </h2>
+        <h2 className="font-epilogue font-semibold text-xl text-[#25324B] leading-[160%]">Skills</h2>
         <div className="flex gap-2">
           <button
             onClick={() => {
               setShowAddForm(!showAddForm);
               setEditingIndex(null);
             }}
-            className="p-2 border border-[#D6DDEB] hover:bg-[#4640DE] text-[#4640DE] hover:text-white hover:border-[#4640DE]"
+            className="p-2 border border-[#D6DDEB] hover:bg-[#4640DE] text-[#4640DE] hover:text-white"
           >
             {showAddForm ? <X size={20} /> : <Plus size={20} />}
           </button>
           <button
             onClick={() => setIsEditing(!isEditing)}
-            className="p-2 border border-[#D6DDEB] hover:bg-[#4640DE] text-[#4640DE] hover:text-white hover:border-[#4640DE]"
+            className="p-2 border border-[#D6DDEB] hover:bg-[#4640DE] text-[#4640DE] hover:text-white"
           >
             {isEditing ? <Save size={16} /> : <SquarePen size={16} />}
           </button>
         </div>
       </div>
 
+      {/* Add Skill Form */}
       {showAddForm && (
         <div className="mb-4 flex gap-2">
           <input
@@ -96,6 +128,7 @@ const SkillsSection = () => {
         </div>
       )}
 
+      {/* Skills List */}
       <div className="flex flex-wrap gap-4">
         {skills.map((skill, index) => (
           <div key={index} className="relative group">
@@ -107,16 +140,10 @@ const SkillsSection = () => {
                   onChange={(e) => setEditSkillValue(e.target.value)}
                   className="px-4 py-2 border border-[#4640DE] rounded"
                 />
-                <button
-                  onClick={saveEditSkill}
-                  className="p-1 text-green-500 hover:text-green-700"
-                >
+                <button onClick={saveEditSkill} className="text-green-500">
                   <Save size={16} />
                 </button>
-                <button
-                  onClick={cancelEdit}
-                  className="p-1 text-gray-500 hover:text-gray-700"
-                >
+                <button onClick={cancelEdit} className="text-gray-500">
                   <X size={16} />
                 </button>
               </div>

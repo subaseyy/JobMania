@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
+const Profile = require('../models/profile.model');
 const { sendOtpEmail } = require('../configs/sendOtpEmail');
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -30,6 +31,21 @@ exports.signup = async (req, res) => {
       isVerified: false,
     });
 
+    const profile = await Profile.create({
+      user: user._id,
+      full_name: full_name,
+      contact_number: "",
+      resume_url: "",
+      profile_picture: "",
+      skills: [],
+      experience: "",
+      education: "",
+    });
+
+    console.log(profile._id);
+
+    user.profile = profile._id;
+    await user.save();
 
     await sendOtpEmail(email, otp);
 
@@ -116,7 +132,7 @@ exports.login = async (req, res) => {
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'Strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     };
 
     // Set token cookie
@@ -124,6 +140,7 @@ exports.login = async (req, res) => {
     res.cookie('role', user.role, { ...cookieOptions, httpOnly: false });
     res.cookie('user_id', user._id.toString(), { ...cookieOptions, httpOnly: false });
     res.cookie('full_name', user.full_name, { ...cookieOptions, httpOnly: false });
+    res.cookie('email', user.email, { ...cookieOptions, httpOnly: false });
 
     return res.status(200).json({
       status: 200,

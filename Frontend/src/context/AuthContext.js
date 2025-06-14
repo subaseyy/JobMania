@@ -8,19 +8,19 @@ export const AuthProvider = ({ children }) => {
   const [auth, setAuth] = useState({
     role: null,
     user_id: null,
-    username: null,
+    full_name: null,
   });
 
   useEffect(() => {
     const role = Cookies.get("role");
     const user_id = Cookies.get("user_id");
-    const username = Cookies.get("username");
+    const full_name = Cookies.get("full_name");
 
-    if (role && user_id && username) {
+    if (role && user_id && full_name) {
       setAuth({
         role,
         user_id,
-        username,
+        full_name,
       });
     }
   }, []);

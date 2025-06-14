@@ -14,7 +14,7 @@ const profileSchema = new mongoose.Schema({
   },
   contact_number: {
     type: String,
-    required: true,
+    // required: true,
     trim: true,
   },
   resume_url: {
@@ -102,4 +102,16 @@ const profileSchema = new mongoose.Schema({
   timestamps: true,
 });
 
-module.exports = mongoose.mode
+// Auto-populate full_name from User before save (if needed)
+profileSchema.pre('validate', async function (next) {
+  if (!this.full_name && this.user) {
+    const User = mongoose.model('User');
+    const user = await User.findById(this.user);
+    if (user && user.name) {
+      this.full_name = user.name;
+    }
+  }
+  next();
+});
+
+module.exports = mongoose.model('Profile', profileSchema);

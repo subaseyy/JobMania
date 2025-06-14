@@ -24,7 +24,7 @@ export default function Login() {
         password,
         role: activeTab,
       });
-      console.log("data", data);
+      // console.log("data", data);
       setAuth({
         role: data.role,
         user_id: data.user_id,
@@ -35,7 +35,7 @@ export default function Login() {
 
       router.push("/home");
     } catch (error) {
-      console.error("Login failed:", error.message);
+      // console.error("Login failed:", error.message);
       setError(error.message || "Login failed. Please try again.");
     }
   };

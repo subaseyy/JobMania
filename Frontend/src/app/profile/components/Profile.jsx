@@ -59,7 +59,7 @@ export default function ProfileForm() {
 
   const cancelEditing = () => {
     setSkillsInput(profile.skills?.join(", ") || "");
-    setPreviewImage( `${process.env.NEXT_PUBLIC_BASE_URL}${profile.profile_picture}`|| "");
+    setPreviewImage( `${process.env.NEXT_PUBLIC_BASE_URL}${profile?.profile_picture}` || "");
     setIsEditing(false);
     setError("");
     setSuccess("");

@@ -1,7 +1,8 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import { MapPin, Flag, SquarePen } from "lucide-react";
-import { getProfile } from "@/lib/api/Auth";
+import { getProfile, updateProfile } from "@/lib/api/Auth";
+import Cookies from "js-cookie";
 
 const ProfileHeader = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -27,7 +28,11 @@ const ProfileHeader = () => {
 
         setProfile(formattedProfile);
         setTempProfile(formattedProfile);
-        setBgImage(`${process.env.NEXT_PUBLIC_API_BASE_URL}${formattedProfile.bg_image}`);
+        setBgImage(
+          formattedProfile.bg_image
+            ? `${process.env.NEXT_PUBLIC_BASE_URL}${formattedProfile.bg_image}`
+            : "/profile/bg.png"
+        );
       } catch (err) {
         console.error("Failed to load profile header", err);
       }
@@ -41,20 +46,69 @@ const ProfileHeader = () => {
     setTempProfile({ ...tempProfile, [name]: value });
   };
 
-  const saveChanges = () => {
-    setProfile(tempProfile);
-    setIsEditing(false);
+  const handleSaveChanges = async () => {
+    try {
+      const updatePayload = {
+        full_name: tempProfile.name,
+        title: tempProfile.title,
+        company: tempProfile.company,
+        location: tempProfile.location,
+        // Don't need to pass bg_image here if it's already updated separately
+      };
+
+      const updated = await updateProfile(updatePayload);
+      const { profile: updatedProfile, user } = updated.data;
+
+      const formatted = {
+        name: updatedProfile.full_name || user.name || "",
+        title: updatedProfile.title || "",
+        company: updatedProfile.company || "",
+        location: updatedProfile.location || "",
+        profile_picture: updatedProfile.profile_picture || "",
+        bg_image: updatedProfile.bg_image || "",
+      };
+
+      setProfile(formatted);
+      setTempProfile(formatted);
+      setBgImage(
+        formatted.bg_image
+          ? `${process.env.NEXT_PUBLIC_BASE_URL}${formatted.bg_image}`
+          : "/profile/bg.png"
+      );
+      setIsEditing(false);
+    } catch (err) {
+      console.error("Error updating profile:", err);
+      alert("Failed to save changes.");
+    }
   };
 
-  const handleBgChange = (e) => {
+  const handleBgChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setBgImage(reader.result);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setBgImage(reader.result); // for preview
+    };
+    reader.readAsDataURL(file);
+
+    const formData = new FormData();
+    formData.append("bg_image", file);
+
+    try {
+      const updated = await updateProfile(formData);
+      const { bg_image } = updated.data.profile;
+
+      setBgImage(
+        bg_image
+          ? `${process.env.NEXT_PUBLIC_BASE_URL}${bg_image}`
+          : "/profile/bg.png"
+      );
+    } catch (err) {
+      console.error("Failed to update background image", err);
+      alert("Failed to update background image.");
     }
+
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -70,6 +124,7 @@ const ProfileHeader = () => {
 
   return (
     <div className="bg-white rounded-lg shadow-sm overflow-hidden border border-[#D6DDEB]">
+      {/* Background Image Section */}
       <div
         className="h-48 bg-cover bg-center relative"
         style={{ backgroundImage: `url(${bgImage})` }}
@@ -93,8 +148,10 @@ const ProfileHeader = () => {
         </div>
       </div>
 
+      {/* Profile Info */}
       <div className="px-6 mt-6 relative">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6 mb-4">
+          {/* Profile Picture */}
           <div className="md:absolute -top-20 left-6">
             <img
               src={
@@ -107,6 +164,7 @@ const ProfileHeader = () => {
             />
           </div>
 
+          {/* Editable Fields */}
           <div className="flex flex-col justify-between flex-1">
             <div className="grid md:grid-cols-[20%_40%_40%] gap-4">
               <div className="hidden md:block"></div>
@@ -147,7 +205,10 @@ const ProfileHeader = () => {
                       {profile.name}
                     </h1>
                     <p className="font-epilogue font-[400] text-lg text-[#7C8493] mb-2">
-                      {profile.title} at <span className="font-[500] text-[#25324B]">{profile.company}</span>
+                      {profile.title} at{" "}
+                      <span className="font-[500] text-[#25324B]">
+                        {profile.company}
+                      </span>
                     </p>
                     <p className="font-epilogue font-[400] text-lg text-[#7C8493] mb-3 flex gap-2 items-center">
                       <MapPin strokeWidth={2} />
@@ -164,11 +225,12 @@ const ProfileHeader = () => {
                 </div>
               </div>
 
+              {/* Edit/Save Buttons */}
               <div className="flex items-start justify-start md:justify-end mr-6 space-x-2">
                 {isEditing ? (
                   <>
                     <button
-                      onClick={saveChanges}
+                      onClick={handleSaveChanges}
                       className="px-6 py-3 font-epilogue font-[700] text-base text-white bg-[#4640DE] hover:bg-[#3730c4] transition-all rounded"
                     >
                       Save

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import {
   Home,
   MessageSquare,
@@ -12,16 +12,29 @@ import {
   HelpCircle,
   Menu,
   X,
-  LogOut, 
+  LogOut,
 } from "lucide-react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import NotificationSystem from "./notification/page";
+import { AuthContext } from "@/context/AuthContext";
+import Cookies from "js-cookie";
 
 export default function Layout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const { auth, setAuth } = useContext(AuthContext);
+
+  const [userName, setUserName] = useState("");
+  const [userEmail, setUserEmail] = useState("");
+
+  useEffect(() => {
+    const name = Cookies.get("full_name");
+    const email = Cookies.get("email");
+    if (name) setUserName(name);
+    if (email) setUserEmail(email);
+  }, []);
 
   const currentSlug = pathname.split("/").pop();
 
@@ -35,26 +48,17 @@ export default function Layout({ children }) {
     setting: "Settings",
     "help-center": "Help Center",
     "job-description": "Job Description",
-    "company-description": "company Description",
+    "company-description": "Company Description",
   };
 
   const pageTitle = titleMap[currentSlug] || currentSlug;
 
   const navItems = [
     { label: "Dashboard", icon: Home, path: "/dashboard/dashboard-overview" },
-    {
-      label: "Messages",
-      icon: MessageSquare,
-      badge: 1,
-      path: "/dashboard/messages",
-    },
+    { label: "Messages", icon: MessageSquare, badge: 1, path: "/dashboard/messages" },
     { label: "Applications", icon: FileText, path: "/dashboard/application" },
     { label: "Find Jobs", icon: Search, path: "/dashboard/job" },
-    {
-      label: "Browse Companies",
-      icon: Building2,
-      path: "/dashboard/companies",
-    },
+    { label: "Browse Companies", icon: Building2, path: "/dashboard/companies" },
     { label: "My Public Profile", icon: User, path: "/dashboard/profile" },
   ];
 
@@ -67,9 +71,31 @@ export default function Layout({ children }) {
     setSidebarOpen(false);
   }
 
-  const handleLogout = () => {
-    console.log("User logged out");
-  };
+  async function handleLogout() {
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+
+      setAuth({
+        role: null,
+        user_id: null,
+        username: null,
+      });
+
+      Cookies.remove("token");
+      Cookies.remove("role");
+      Cookies.remove("user_id");
+      Cookies.remove("full_name");
+      Cookies.remove("email");
+
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout failed:", error.message);
+      alert("Logout failed. Please try again.");
+    }
+  }
 
   return (
     <div className="min-h-screen overflow-hidden bg-gray-50">
@@ -80,15 +106,11 @@ export default function Layout({ children }) {
       >
         <div className="p-6 border-b border-purple-100 flex justify-between items-center my-4">
           <Image src="/logo.png" alt="Logo" width={216} height={40} />
-          <button
-            className="md:hidden text-gray-700"
-            onClick={() => setSidebarOpen(false)}
-          >
+          <button className="md:hidden text-gray-700" onClick={() => setSidebarOpen(false)}>
             <X size={24} />
           </button>
         </div>
 
-        {/* Navigation */}
         <nav className="flex-1 py-4 px-3">
           <ul className="space-y-2">
             {navItems.map((item) => (
@@ -143,12 +165,11 @@ export default function Layout({ children }) {
           </div>
         </nav>
 
-        {/* User Profile in Sidebar */}
         <div className="p-4">
           {currentSlug === "profile" && (
             <button
               onClick={handleLogout}
-              className="border border-[#E2E7F5] shadow-[-8px_8px_40px_0px_#00000014;] mb-3 w-full flex items-center justify-start gap-2 py-5 rounded-lg font-epilogue font-[500] text-base leading-[160%] text-[#FF6550] hover:scale-[1.03] transition-all duration-300 ease-in-out"
+              className="border border-[#E2E7F5] shadow-[-8px_8px_40px_0px_#00000014] mb-3 w-full flex items-center justify-start gap-2 py-5 rounded-lg font-epilogue font-[500] text-base leading-[160%] text-[#FF6550] hover:scale-[1.03] transition-all duration-300 ease-in-out"
             >
               <LogOut size={20} className="mr-3 ml-5" />
               <span>Logout</span>
@@ -161,25 +182,20 @@ export default function Layout({ children }) {
             </div>
             <div className="ml-3">
               <div className="font-epilogue font-[600] text-lg leading-[160%] text-[#202430]">
-                Subas Kandel
+                {userName || "Guest"}
               </div>
-              <div className="font-epilogue font-[400] text-xs leading-[160%] text-[#202430] truncate">
-                kandelsuba89@gmail.com
+              <div className="font-epilogue font-[400] text-xs leading-[160%] text-[#7C8493] truncate">
+                {userEmail || ""}
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="md:ml-64">
-        {/* Header */}
         <header className="bg-white p-4 md:p-6 border-b flex justify-between items-center sticky top-0 z-10">
           <div className="flex items-center gap-4">
-            <button
-              className="md:hidden text-gray-700"
-              onClick={() => setSidebarOpen(true)}
-            >
+            <button className="md:hidden text-gray-700" onClick={() => setSidebarOpen(true)}>
               <Menu size={24} />
             </button>
             <h1 className="font-clash font-semibold text-2xl md:text-[32px] text-[#25324B] capitalize">

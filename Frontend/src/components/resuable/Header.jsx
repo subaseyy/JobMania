@@ -11,23 +11,22 @@ const Header = () => {
   const router = useRouter();
   const { auth, setAuth } = useContext(AuthContext);
 
-  const isActive = (path) => pathname === path;
+  // const isActive = (path) => pathname === path;
 
-  const handleLogout = async () => {
+  const isActive = (path) => {
+    if (path.endsWith("/*")) {
+      return pathname.startsWith(path.replace("/*", ""));
+    }
+    return pathname === path;
+  };
+
+
+  async function handleLogout() {
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/logout`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/logout`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${Cookies.get("access_token")}`,
-        },
         credentials: "include",
       });
-
-      
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-
 
       setAuth({
         role: null,
@@ -35,12 +34,19 @@ const Header = () => {
         username: null,
       });
 
+      // Optional: Remove cookies client-side for immediate effect
+      Cookies.remove("token");
+      Cookies.remove("role");
+      Cookies.remove("user_id");
+      Cookies.remove("full_name");
+      Cookies.remove("email");
+
       router.push("/login");
     } catch (error) {
       console.error("Logout failed:", error.message);
       alert("Logout failed. Please try again.");
     }
-  };
+  }
 
   const isAuthenticated = auth.user_id !== null;
 
@@ -80,7 +86,27 @@ const Header = () => {
                 Browse Companies
               </p>
             </Link>
-            <Link href="/profile">profile</Link>
+            {isAuthenticated ? (
+              <>
+                <Link href="/profile"> <p
+                className={`font-epilogue font-[500] text-sm sm:text-base leading-[160%] cursor-pointer transition-colors ${
+                  isActive("/profile")
+                    ? "text-[#4640DE] border-b-4 border-[#4640DE] pb-4"
+                    : "text-[#515B6F] hover:text-[#4640DE] pb-4"
+                }`}
+              > profile </p></Link>
+
+                <Link href="/dashboard/dashboard-overview"> <p
+                className={`font-epilogue font-[500] text-sm sm:text-base leading-[160%] cursor-pointer transition-colors ${
+                  isActive("/dashboard/*")
+                    ? "text-[#4640DE] border-b-4 border-[#4640DE] pb-4"
+                    : "text-[#515B6F] hover:text-[#4640DE] pb-4"
+                }`}
+              >dashboard </p></Link>
+              </>
+            ) : (
+              <></>
+            )}
           </div>
         </div>
 

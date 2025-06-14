@@ -1,20 +1,15 @@
 "use client";
-import React, { useState, useRef } from "react";
-import { Plus, SquarePen, Trash2, Save, X } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import { Plus, SquarePen, Trash2, X } from "lucide-react";
+import { getProfile, updateProfile } from "@/lib/api/Auth";
 
 const Modal = ({ isOpen, onClose, children }) => {
   if (!isOpen) return null;
 
-  const handleBackdropClick = (e) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
-
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
-      onClick={handleBackdropClick}
+      onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
         className="bg-white p-6 rounded-lg w-full max-w-2xl shadow-lg relative"
@@ -33,31 +28,12 @@ const Modal = ({ isOpen, onClose, children }) => {
 };
 
 const EducationSection = () => {
-  const [educations, setEducations] = useState([
-    {
-      id: 1,
-      university: "Harvard University",
-      logo: "https://upload.wikimedia.org/wikipedia/en/2/29/Harvard_shield_wreath.svg",
-      degree: "Bachelor of Arts - BA, Economics",
-      duration: "2016 - 2020",
-      description:
-        "Acquired deep knowledge in theoretical and empirical economics, gaining a strong foundation in macro and microeconomic analysis.",
-    },
-    {
-      id: 2,
-      university: "Yale University",
-      logo: "https://upload.wikimedia.org/wikipedia/en/3/3b/Yale_University_Shield_1.svg",
-      degree: "Master of Business Administration - MBA",
-      duration: "2020 - 2022",
-      description:
-        "Focused on strategic management, entrepreneurship, and data-driven decision-making in a global business context.",
-    },
-  ]);
-
+  const [educations, setEducations] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
   const [editingId, setEditingId] = useState(null);
+
   const [form, setForm] = useState({
-    id: null,
     university: "",
     logo: "",
     logoFile: null,
@@ -68,32 +44,45 @@ const EducationSection = () => {
 
   const fileInputRef = useRef(null);
 
+  useEffect(() => {
+    const fetchEducations = async () => {
+      try {
+        const res = await getProfile();
+        const { profile } = res.data;
+        setEducations(profile.educations || []);
+      } catch (err) {
+        console.error("Failed to fetch educations", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEducations();
+  }, []);
+
   const handleInputChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setForm({
-          ...form,
-          logo: reader.result,
-          logoFile: file
-        });
-      };
-      reader.readAsDataURL(file);
-    }
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setForm((prev) => ({
+        ...prev,
+        logo: reader.result,
+        logoFile: file,
+      }));
+    };
+    reader.readAsDataURL(file);
   };
 
   const triggerFileInput = () => {
-    fileInputRef.current.click();
+    fileInputRef.current?.click();
   };
 
   const startAdd = () => {
     setForm({
-      id: null,
       university: "",
       logo: "",
       logoFile: null,
@@ -104,18 +93,14 @@ const EducationSection = () => {
     setEditingId("new");
   };
 
-  const startEdit = (edu) => {
-    setForm({
-      ...edu,
-      logoFile: null
-    });
-    setEditingId(edu.id);
+  const startEdit = (edu, index) => {
+    setForm({ ...edu, logoFile: null });
+    setEditingId(index);
   };
 
   const cancelEdit = () => {
     setEditingId(null);
     setForm({
-      id: null,
       university: "",
       logo: "",
       logoFile: null,
@@ -125,76 +110,73 @@ const EducationSection = () => {
     });
   };
 
-  const saveEducation = () => {
-    const educationToSave = { ...form };
-    delete educationToSave.logoFile;
-    
-    if (editingId === "new") {
-      setEducations([...educations, { ...educationToSave, id: Date.now() }]);
-    } else {
-      setEducations(
-        educations.map((edu) => (edu.id === editingId ? educationToSave : edu))
-      );
+  const saveEducation = async () => {
+    try {
+      const updated = [...educations];
+      const entry = { ...form };
+      delete entry.logoFile;
+
+      if (editingId === "new") {
+        updated.push(entry);
+      } else {
+        updated[editingId] = entry;
+      }
+
+      const res = await updateProfile({ educations: updated });
+      setEducations(res.data.profile.educations);
+      cancelEdit();
+    } catch (err) {
+      console.error("Failed to save education", err);
+      alert("Failed to save education. Please try again.");
     }
-    cancelEdit();
   };
 
-  const deleteEducation = (id) => {
-    setEducations(educations.filter((edu) => edu.id !== id));
-    cancelEdit();
+  const deleteEducation = async (index) => {
+    try {
+      const updated = educations.filter((_, i) => i !== index);
+      const res = await updateProfile({ educations: updated });
+      setEducations(res.data.profile.educations);
+      cancelEdit();
+    } catch (err) {
+      console.error("Failed to delete education", err);
+      alert("Failed to delete education. Please try again.");
+    }
   };
 
   const visibleEducations = showAll ? educations : educations.slice(0, 2);
 
+  if (loading) return <div className="p-6">Loading education...</div>;
+
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 border border-[#D6DDEB]">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="font-epilogue font-semibold text-xl text-[#25324B]">
-          Education
-        </h2>
+        <h2 className="font-epilogue font-semibold text-xl text-[#25324B]">Education</h2>
         <button
           onClick={startAdd}
-          className="p-2 border border-[#D6DDEB] hover:bg-[#4640DE] text-[#4640DE] hover:text-white hover:border-[#4640DE] rounded"
+          className="p-2 border border-[#D6DDEB] hover:bg-[#4640DE] text-[#4640DE] hover:text-white rounded"
         >
           <Plus size={20} />
         </button>
       </div>
 
       {visibleEducations.map((edu, index) => (
-        <div
-          key={edu.id}
-          className={`flex items-start gap-4 ${
-            index !== visibleEducations.length - 1
-              ? "pb-6 mb-6 border-b border-gray-200"
-              : ""
-          }`}
-        >
-          <img
-            src={edu.logo}
-            alt={edu.university}
-            className="w-12 h-12 rounded-full object-cover bg-gray-100"
-          />
+        <div key={index} className={`flex gap-4 ${index !== visibleEducations.length - 1 ? "pb-6 mb-6 border-b" : ""}`}>
+          <img src={edu.logo} alt={edu.university} className="w-12 h-12 rounded-full object-cover bg-gray-100" />
           <div className="flex-1">
             <div className="flex justify-between">
               <div>
-                <h3 className="font-epilogue font-semibold text-lg text-[#25324B] mb-1">
-                  {edu.university}
-                </h3>
+                <h3 className="font-epilogue font-semibold text-lg text-[#25324B] mb-1">{edu.university}</h3>
                 <p className="text-base text-[#515B6F] mb-1">{edu.degree}</p>
                 <p className="text-[#7C8493]">{edu.duration}</p>
               </div>
-              <div>
-                <button
-                  onClick={() => startEdit(edu)}
-                  className="p-2 border border-[#D6DDEB] hover:bg-[#4640DE] text-[#4640DE] hover:text-white hover:border-[#4640DE] rounded"
-                >
-                  <SquarePen size={16} />
-                </button>
-              </div>
+              <button
+                onClick={() => startEdit(edu, index)}
+                className="p-2 border border-[#D6DDEB] hover:bg-[#4640DE] text-[#4640DE] hover:text-white rounded"
+              >
+                <SquarePen size={16} />
+              </button>
             </div>
-            {edu.description && (
-              <p className="text-[#25324B] mt-2">{edu.description}</p>
-            )}
+            <p className="text-[#25324B] mt-2">{edu.description}</p>
           </div>
         </div>
       ))}
@@ -205,48 +187,28 @@ const EducationSection = () => {
             onClick={() => setShowAll(!showAll)}
             className="text-[#4640DE] font-medium hover:underline"
           >
-            {showAll
-              ? "Show less education"
-              : `Show ${educations.length - 2} more education`}
+            {showAll ? "Show less education" : `Show ${educations.length - 2} more`}
           </button>
         </div>
       )}
 
-      {/* Modal for Add/Edit Education */}
-      <Modal
-        isOpen={
-          editingId === "new" || (editingId !== null && editingId !== undefined)
-        }
-        onClose={cancelEdit}
-      >
-        <h3 className="text-lg font-semibold mb-4">
-          {editingId === "new" ? "Add Education" : "Edit Education"}
-        </h3>
+      <Modal isOpen={editingId !== null} onClose={cancelEdit}>
+        <h3 className="text-lg font-semibold mb-4">{editingId === "new" ? "Add Education" : "Edit Education"}</h3>
         <div className="grid grid-cols-2 gap-3 mb-2">
-          <input
-            name="university"
-            value={form.university}
-            onChange={handleInputChange}
-            placeholder="University"
-            className="col-span-2 border p-2 rounded"
-          />
-          <input
-            name="degree"
-            value={form.degree}
-            onChange={handleInputChange}
-            placeholder="Degree"
-            className="col-span-2 border p-2 rounded"
-          />
-          <input
-            name="duration"
-            value={form.duration}
-            onChange={handleInputChange}
-            placeholder="Duration"
-            className="col-span-2 border p-2 rounded"
-          />
-          
-          {/* Logo upload section */}
-          <div className="col-span-2">
+          {["university", "degree", "duration"].map((field) => (
+            <input
+              key={field}
+              name={field}
+              value={form[field]}
+              onChange={handleInputChange}
+              placeholder={field[0].toUpperCase() + field.slice(1)}
+              className="col-span-2 border p-2 rounded"
+            />
+          ))}
+          <div className="col-span-2 flex items-center gap-3">
+            <button onClick={triggerFileInput} className="border p-2 rounded bg-gray-100 hover:bg-gray-200">
+              Upload Logo
+            </button>
             <input
               type="file"
               ref={fileInputRef}
@@ -254,29 +216,13 @@ const EducationSection = () => {
               accept="image/*"
               className="hidden"
             />
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={triggerFileInput}
-                className="border p-2 rounded bg-gray-100 hover:bg-gray-200"
-              >
-                Upload Logo
-              </button>
-              {form.logo && (
-                <div className="flex items-center gap-2">
-                  <img 
-                    src={form.logo} 
-                    alt="Logo preview" 
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
-                  <span className="text-sm text-gray-500">
-                    {form.logoFile ? form.logoFile.name : "Current logo"}
-                  </span>
-                </div>
-              )}
-            </div>
+            {form.logo && (
+              <div className="flex items-center gap-2">
+                <img src={form.logo} alt="Logo preview" className="w-10 h-10 rounded-full object-cover" />
+                <span className="text-sm text-gray-500">{form.logoFile?.name || "Current logo"}</span>
+              </div>
+            )}
           </div>
-          
           <textarea
             name="description"
             value={form.description}
@@ -285,26 +231,15 @@ const EducationSection = () => {
             className="col-span-2 border p-2 rounded"
           />
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={saveEducation}
-            className="bg-[#4640DE] text-white px-4 py-1 rounded"
-          >
-            Save
-          </button>
-          <button
-            onClick={cancelEdit}
-            className="border border-gray-400 px-4 py-1 rounded"
-          >
-            Cancel
-          </button>
+        <div className="flex gap-3">
+          <button onClick={saveEducation} className="bg-[#4640DE] text-white px-4 py-2 rounded">Save</button>
+          <button onClick={cancelEdit} className="border border-gray-300 px-4 py-2 rounded">Cancel</button>
           {editingId !== "new" && (
             <button
-              onClick={() => deleteEducation(form.id)}
+              onClick={() => deleteEducation(editingId)}
               className="flex items-center gap-1 text-red-500 hover:underline"
             >
-              <Trash2 size={16} />
-              Delete
+              <Trash2 size={16} /> Delete
             </button>
           )}
         </div>

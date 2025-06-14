@@ -17,13 +17,13 @@ export default function Signup() {
     e.preventDefault();
     setError(null);
     const formData = new FormData(e.target);
-    const name = formData.get("name");
+    const full_name = formData.get("full_name");
     const email = formData.get("email");
     const password = formData.get("password");
 
     try {
       const data = await register({
-        name,
+        full_name,
         email,
         password,
         role: activeTab,
@@ -42,8 +42,7 @@ export default function Signup() {
 
   const handleOtpVerified = async () => {
     if (pendingUserData) {
-      localStorage.setItem("token", pendingUserData.token);
-      localStorage.setItem("user", JSON.stringify(pendingUserData.user));
+ 
       router.push("/dashboard");
     }
   };
@@ -103,7 +102,7 @@ export default function Signup() {
                 {activeTab === "jobseeker" ? "Full name" : "Company name"}
               </label>
               <input
-                name="name"
+                name="full_name"
                 type="text"
                 placeholder={
                   activeTab === "jobseeker"
