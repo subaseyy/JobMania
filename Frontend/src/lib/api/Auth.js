@@ -92,6 +92,33 @@ export async function verifyOtp({ email, otp }) {
   }
 }
 
+export async function verifyEmailOtp({ email, otp }) {
+  try {
+
+    const token = Cookies.get("token"); 
+
+    const response = await fetch(`${API_BASE}/auth/verify-email-otp/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": token,
+
+      },
+      body: JSON.stringify({ email, otp }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) throw new Error(data.detail || "OTP verification failed");
+
+
+
+    return data;
+  } catch (error) {
+    throw error;
+  }
+}
+
 export async function getProfile() {
   try {
 
@@ -177,3 +204,55 @@ export async function submitJobApplication(jobId, coverLetter) {
   return result;
 }
 
+
+export async function updateEmailWithOtp(email) {
+  try {
+    const token = Cookies.get("token");
+
+    const response = await fetch(`${API_BASE}/auth/change-email`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": token,
+      },
+      credentials: "include",
+      body: JSON.stringify({ email }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Failed to send OTP for email change");
+    }
+
+    return data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+
+export async function changePassword(oldPassword, newPassword) {
+  try {
+    const token = Cookies.get("token");
+
+    const response = await fetch(`${API_BASE}/auth/change-password`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": token,
+      },
+      credentials: "include",
+      body: JSON.stringify({ oldPassword, newPassword }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || "Failed to change password");
+    }
+
+    return data;
+  } catch (error) {
+    throw error;
+  }
+}

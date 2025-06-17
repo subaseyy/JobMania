@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import SettingsTabs from "./component/SettingsTabs";
-import ProfileTab from "./component/ProfileTab";
-import LoginDetailsTab from "./component/LoginDetailsTab";
-import NotificationsTab from "./component/NotificationsTab";
+import SettingsTabs from "./components/SettingsTabs";
+import ProfileTab from "./components/ProfileTab";
+import LoginDetailsTab from "./components/LoginDetailsTab";
+import NotificationsTab from "./components/NotificationsTab";
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState("My Profile");

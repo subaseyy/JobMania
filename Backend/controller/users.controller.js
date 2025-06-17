@@ -71,9 +71,6 @@ exports.updateProfile = async (req, res) => {
       profile = new Profile({ user: userId });
     }
 
-
-    
-
     // === Core Field Updates ===
     profile.full_name = full_name || profile.full_name || user.name;
     profile.contact_number = contact_number || profile.contact_number;

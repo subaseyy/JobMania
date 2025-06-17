@@ -15,6 +15,12 @@ const userSchema = new mongoose.Schema({
     trim: true,
   },
 
+  tempEmail: { // ✅ fixed casing
+    type: String,
+    unique: true,
+    sparse: true, // ✅ avoid dup null issue
+  },
+
   password: {
     type: String,
     required: true,
@@ -36,32 +42,39 @@ const userSchema = new mongoose.Schema({
     ref: 'Profile',
     default: null,
   },
-otp: {
-  type: String,
-},
-otpExpires: {
-  type: Date,
-},
-isVerified: {
-  type: Boolean,
-  default: false,
-},
-bg_image: {
-  type: String,
-  trim: true,
-},
-title: {
-  type: String,
-  trim: true,
-},
-company: {
-  type: String,
-  trim: true,
-},
-location: {
-  type: String,
-  trim: true,
-},
+
+  otp: {
+    type: String,
+  },
+
+  otpExpires: {
+    type: Date,
+  },
+
+  isVerified: {
+    type: Boolean,
+    default: false,
+  },
+
+  bg_image: {
+    type: String,
+    trim: true,
+  },
+
+  title: {
+    type: String,
+    trim: true,
+  },
+
+  company: {
+    type: String,
+    trim: true,
+  },
+
+  location: {
+    type: String,
+    trim: true,
+  },
 
 }, {
   timestamps: true,

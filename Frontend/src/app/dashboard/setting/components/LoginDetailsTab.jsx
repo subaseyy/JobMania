@@ -1,6 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CheckCircle, CircleAlert, CircleCheck } from "lucide-react";
+import { changePassword, updateEmailWithOtp, verifyOtp } from "@/lib/api/Auth";
+import OTPModal from "./components/OTPModal";
+import Cookies from "js-cookie";
+
 
 export default function LoginDetailsTab() {
   const [email, setEmail] = useState("");
@@ -11,6 +15,16 @@ export default function LoginDetailsTab() {
   const [newPassword, setNewPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
+
+  const [showOtpModal, setShowOtpModal] = useState(false);
+
+  useEffect(() => {
+
+      const email = Cookies.get("email");
+
+      if (email) setUserEmail(email);
+    }, []);
 
   const clearEmailMessages = () => {
     setTimeout(() => {
@@ -26,39 +40,53 @@ export default function LoginDetailsTab() {
     }, 3000);
   };
 
-  const handleEmailUpdate = () => {
+  const handleEmailUpdate = async () => {
     if (!email || !/\S+@\S+\.\S+/.test(email)) {
       setEmailError("Please enter a valid email address.");
       setEmailSuccess(false);
       clearEmailMessages();
       return;
     }
-    setEmailError("");
+
+    try {
+      await updateEmailWithOtp(email);
+      setShowOtpModal(true);
+    } catch (error) {
+      setEmailError(error.message);
+    }
+  };
+
+  const handleOtpVerified = async () => {
     setEmailSuccess(true);
     setEmail("");
-    console.log("Updated Email:", email);
+    setShowOtpModal(false);
     clearEmailMessages();
   };
 
-  const handlePasswordChange = () => {
-    if (oldPassword.length < 8 || newPassword.length < 8) {
-      setPasswordError("Passwords must be at least 8 characters long.");
-      setPasswordSuccess(false);
-      clearPasswordMessages();
-      return;
-    }
-    setPasswordError("");
+ const handlePasswordChange = async () => {
+  if (oldPassword.length < 8 || newPassword.length < 8) {
+    setPasswordError("Passwords must be at least 8 characters long.");
+    setPasswordSuccess(false);
+    clearPasswordMessages();
+    return;
+  }
+
+  try {
+    await changePassword(oldPassword, newPassword);
     setPasswordSuccess(true);
-    console.log("Password Change:");
-    console.log("Old Password:", oldPassword);
-    console.log("New Password:", newPassword);
     setOldPassword("");
     setNewPassword("");
+  } catch (error) {
+    setPasswordError(error.message);
+    setPasswordSuccess(false);
+  } finally {
     clearPasswordMessages();
-  };
+  }
+};
 
   return (
     <div className="px-6 py-8 text-sm text-gray-700">
+     <div className="px-6 py-8 text-sm text-gray-700">
       <div className="mb-6 border-b pb-6">
         <h2 className="font-epilogue font-semibold text-lg text-[#202430] mb-1">
           Basic Information
@@ -81,7 +109,7 @@ export default function LoginDetailsTab() {
 
         <div>
           <div className="font-epilogue text-base text-[#25324B] mb-2">
-            <span className="font-medium">subaskandel@email.com</span>{" "}
+            <span className="font-medium">{ userEmail }</span>{" "}
             <CircleCheck className="inline w-5 h-5 text-[#56CDAD]" />
             <p className="text-sm text-[#7C8493]">Your email is verified.</p>
           </div>
@@ -174,6 +202,16 @@ export default function LoginDetailsTab() {
           Close Account <CircleAlert color="#FF6550" size={20} />
         </button>
       </div>
+    </div>
+
+
+      {showOtpModal && email && (
+        <OTPModal
+          email={email}
+          onVerify={handleOtpVerified}
+          onClose={() => setShowOtpModal(false)}
+        />
+      )}
     </div>
   );
 }
