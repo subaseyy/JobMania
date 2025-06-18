@@ -25,7 +25,7 @@ exports.signup = async (req, res) => {
       email,
       password: hashedPassword,
       role,
-      companyName: role === 'company' ? companyName : undefined,
+      companyName: role === 'company' ? companyName : full_name,
       otp,
       otpExpires,
       isVerified: false,

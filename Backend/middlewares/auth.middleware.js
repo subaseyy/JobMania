@@ -11,7 +11,7 @@ exports.protect = async (req, res, next) => {
     token = req.headers.authorization.split(" ")[1];
   }
 
-  // Try custom header (used in your frontend)
+ 
   if (!token && req.headers["x-csrftoken"]) {
     token = req.headers["x-csrftoken"];
   }
@@ -22,7 +22,7 @@ exports.protect = async (req, res, next) => {
   }
 
   if (!token || typeof token !== "string") {
-    return res.status(401).json({ message: "Not authorized: Token missing or malformed" });
+    return res.status(401).json({ status: 401, message: "Not authorized: Token missing or malformed" });
   }
 
   try {
@@ -30,12 +30,22 @@ exports.protect = async (req, res, next) => {
     req.user = await User.findById(decoded.id).select("-password");
 
     if (!req.user) {
-      return res.status(401).json({ message: "User not found" });
+      return res.status(401).json({ status: 401, message: "User not found" });
     }
 
     next();
   } catch (err) {
     console.error("JWT auth error:", err);
-    return res.status(401).json({ message: "Invalid or expired token" });
+    return res.status(401).json({ status: 401, message: "Invalid or expired token" });
   }
+};
+
+
+exports.authorize = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ status: 403, message: "Forbidden: Insufficient permissions" });
+    }
+    next();
+  };
 };

@@ -84,13 +84,13 @@ exports.updateProfile = async (req, res) => {
     profile.bg_image = bg_image || profile.bg_image;
     profile.about = about || profile.about;
 
-    // === Only update arrays if they are provided ===
+
     if (Array.isArray(skills)) profile.skills = skills;
     if (Array.isArray(portfolios)) profile.portfolios = portfolios;
     if (Array.isArray(experiences)) profile.experiences = experiences;
     if (Array.isArray(educations)) profile.educations = educations;
 
-    // === Nested objects ===
+
     if (additional_details) {
       profile.additional_details = {
         ...profile.additional_details,
@@ -105,7 +105,7 @@ exports.updateProfile = async (req, res) => {
       };
     }
 
-    // Update User name if full_name provided
+
     if (full_name) {
       user.full_name = full_name;
       await user.save();
@@ -131,4 +131,171 @@ exports.updateProfile = async (req, res) => {
     });
   }
 };
+
+exports.getAllProfiles = async (req, res) => {
+  try {
+    const profiles = await Profile.find().populate("user", "name email role");
+    return res.status(200).json({
+      status: 200,
+      message: "All profiles fetched successfully",
+      data: profiles,
+    });
+  } catch (err) {
+    console.error("Error fetching all profiles:", err);
+    return res.status(500).json({
+      status: 500,
+      message: "Server error while fetching all profiles",
+    });
+  }
+};
+
+exports.getProfileById = async (req, res) => {
+  try {
+    console.log("hitted getprofile")
+    const userId = req.params.id;
+    const user = await User.findById(userId).populate("profile");
+
+    if (!user) {
+      return res.status(404).json({ status: 404, message: "User not found" });
+    }
+
+    return res.status(200).json({
+      status: 200,
+      message: "Profile fetched successfully",
+      data: {
+        user: {
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
+        profile: user.profile,
+      },
+    });
+  } catch (err) {
+    console.error("Error fetching profile by ID:", err);
+    return res.status(500).json({
+      status: 500,
+      message: "Server error while fetching profile",
+    });
+  }
+};
+
+
+exports.updateProfileById = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    const {
+      full_name,
+      contact_number,
+      resume_url,
+      experience,
+      education,
+      title,
+      company,
+      location,
+      bg_image,
+      about,
+      additional_details,
+      social_links,
+      skills,
+      portfolios,
+      experiences,
+      educations,
+    } = req.body;
+
+    const profile_picture = req.file ? `/uploads/${req.file.filename}` : undefined;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ status: 404, message: "User not found" });
+    }
+
+    let profile = await Profile.findOne({ user: userId });
+    if (!profile) {
+      profile = new Profile({ user: userId });
+    }
+
+    profile.full_name = full_name || profile.full_name || user.name;
+    profile.contact_number = contact_number || profile.contact_number;
+    profile.resume_url = resume_url || profile.resume_url;
+    profile.profile_picture = profile_picture || profile.profile_picture;
+    profile.experience = experience || profile.experience;
+    profile.education = education || profile.education;
+    profile.title = title || profile.title;
+    profile.company = company || profile.company;
+    profile.location = location || profile.location;
+    profile.bg_image = bg_image || profile.bg_image;
+    profile.about = about || profile.about;
+
+    if (Array.isArray(skills)) profile.skills = skills;
+    if (Array.isArray(portfolios)) profile.portfolios = portfolios;
+    if (Array.isArray(experiences)) profile.experiences = experiences;
+    if (Array.isArray(educations)) profile.educations = educations;
+
+    if (additional_details) {
+      profile.additional_details = {
+        ...profile.additional_details,
+        ...additional_details,
+      };
+    }
+
+    if (social_links) {
+      profile.social_links = {
+        ...profile.social_links,
+        ...social_links,
+      };
+    }
+
+    if (full_name) {
+      user.full_name = full_name;
+      await user.save();
+    }
+
+    await profile.save();
+
+    if (!user.profile) {
+      user.profile = profile._id;
+      await user.save();
+    }
+
+    return res.status(200).json({
+      status: 200,
+      message: "Profile updated successfully",
+      data: { profile },
+    });
+  } catch (err) {
+    console.error("Admin profile update error:", err);
+    return res.status(500).json({
+      status: 500,
+      message: "Server error during profile update",
+    });
+  }
+};
+
+exports.deleteProfileById = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    const user = await User.findByIdAndDelete(userId);
+    if (!user) {
+      return res.status(404).json({ status: 404, message: "User not found" });
+    }
+
+    await Profile.findOneAndDelete({ user: userId });
+
+    return res.status(200).json({
+      status: 200,
+      message: "User and profile deleted successfully",
+    });
+  } catch (err) {
+    console.error("Error deleting profile:", err);
+    return res.status(500).json({
+      status: 500,
+      message: "Server error while deleting profile",
+    });
+  }
+};
+
+
 
