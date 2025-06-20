@@ -299,3 +299,115 @@ exports.deleteProfileById = async (req, res) => {
 
 
 
+exports.createUserByAdmin = async (req, res) => {
+  try {
+    const { name, email, password, role } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        status: 400,
+        message: "Name, email, and password are required",
+      });
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({
+        status: 409,
+        message: "User with this email already exists",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = new User({
+      name,
+      email,
+      password: hashedPassword,
+      role: role || "user",
+    });
+
+    await user.save();
+
+    // Optionally, create an empty profile for the new user
+    const profile = new Profile({ user: user._id, full_name: name });
+    await profile.save();
+
+    user.profile = profile._id;
+    await user.save();
+
+    return res.status(201).json({
+      status: 201,
+      message: "User created successfully",
+      data: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isVerified: true
+      },
+    });
+  } catch (err) {
+    console.error("Error creating user by admin:", err);
+    return res.status(500).json({
+      status: 500,
+      message: "Server error while creating user",
+    });
+  }
+};
+
+exports.updateUserById = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { name, email, role } = req.body;
+
+    if (!name && !email && !role) {
+      return res.status(400).json({
+        status: 400,
+        message: "At least one field (name, email, or role) must be provided",
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        status: 404,
+        message: "User not found",
+      });
+    }
+
+    // Check if the new email is already taken by another user
+    if (email && email !== user.email) {
+      const emailExists = await User.findOne({ email });
+      if (emailExists) {
+        return res.status(409).json({
+          status: 409,
+          message: "Email is already in use by another user",
+        });
+      }
+      user.email = email;
+    }
+
+    if (name) user.name = name;
+    if (role) user.role = role;
+
+    await user.save();
+
+    return res.status(200).json({
+      status: 200,
+      message: "User updated successfully",
+      data: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (err) {
+    console.error("Error updating user by admin:", err);
+    return res.status(500).json({
+      status: 500,
+      message: "Server error while updating user",
+    });
+  }
+};

@@ -7,12 +7,13 @@ const {
   getProfileById,
   updateProfileById,
   deleteProfileById,
+  createUserByAdmin,
 } = require("../controller/users.controller");
 
 const { protect, authorize } = require("../middlewares/auth.middleware");
 const upload = require("../middlewares/upload.middleware");
 
-// === USER ROUTES ===
+
 router.get("/profile", protect, getProfile);
 
 router.put(
@@ -44,5 +45,7 @@ router.put(
 );
 
 router.delete("/admin/profile/:id", protect, authorize("admin"), deleteProfileById);
+router.add("/admin/profile/", protect, authorize("admin"), createUserByAdmin);
+router.put("/admin/user/:id", protect, authorize("admin"), updateUserById);
 
 module.exports = router;

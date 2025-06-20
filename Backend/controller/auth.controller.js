@@ -12,6 +12,12 @@ exports.signup = async (req, res) => {
     const { full_name, email, password, role, companyName } = req.body;
     const existingUser = await User.findOne({ email });
 
+    if (!full_name || !email || !password || !role) {
+      return res.status(400).json({ status: 400, message: 'Missing fields' });
+    }
+
+
+
     if (existingUser) {
       return res.status(409).json({ status: 409, message: 'Email already in use' });
     }
@@ -49,6 +55,12 @@ exports.signup = async (req, res) => {
 
     await sendOtpEmail(email, otp);
 
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
     const cookieOptions = {
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
@@ -60,7 +72,7 @@ exports.signup = async (req, res) => {
     res.cookie('role', user.role, { ...cookieOptions, httpOnly: false });
     res.cookie('user_id', user._id.toString(), { ...cookieOptions, httpOnly: false });
     res.cookie('full_name', user.full_name, { ...cookieOptions, httpOnly: false });
-    
+
 
     return res.status(201).json({
       status: 201,
@@ -106,7 +118,7 @@ exports.verifyOtp = async (req, res) => {
     res.cookie('user_id', user._id.toString(), { ...cookieOptions, httpOnly: false });
     res.cookie('full_name', user.full_name, { ...cookieOptions, httpOnly: false });
 
-     return res.status(200).json({
+    return res.status(200).json({
       message: 'Email verified successfully',
     });
 
@@ -162,8 +174,8 @@ exports.login = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
-    }
-  })
+      }
+    })
 
   } catch (err) {
     console.error('Login error:', err);
@@ -180,7 +192,7 @@ exports.logout = async (req, res) => {
   res.clearCookie('user_id');
   res.clearCookie('name');
 
-  return res.status(200).json({status: 200, message: 'Logged out successfully' });
+  return res.status(200).json({ status: 200, message: 'Logged out successfully' });
 };
 
 
@@ -190,21 +202,21 @@ exports.changePassword = async (req, res) => {
     const { oldPassword, newPassword } = req.body;
 
     if (!oldPassword || !newPassword || newPassword.length < 8) {
-      return res.status(400).json({ status: 400,message: "Invalid input data" });
+      return res.status(400).json({ status: 400, message: "Invalid input data" });
     }
 
     const user = await User.findById(userId);
-    if (!user) return res.status(404).json({status: 404,message: "User not found" });
+    if (!user) return res.status(404).json({ status: 404, message: "User not found" });
 
     const isMatch = await bcrypt.compare(oldPassword, user.password);
     if (!isMatch) {
-      return res.status(401).json({ status: 401,message: "Old password is incorrect" });
+      return res.status(401).json({ status: 401, message: "Old password is incorrect" });
     }
     user.password = await bcrypt.hash(newPassword, 10);
     await user.save();
 
 
-    return res.status(200).json({ status: 200,message: "Password updated successfully" });
+    return res.status(200).json({ status: 200, message: "Password updated successfully" });
   } catch (err) {
     console.error("Change password error:", err);
     return res.status(500).json({ message: "Server error while changing password" });
