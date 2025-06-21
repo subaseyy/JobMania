@@ -48,7 +48,7 @@ exports.signup = async (req, res) => {
       education: "",
     });
 
-    console.log(profile._id);
+
 
     user.profile = profile._id;
     await user.save();
