@@ -10,13 +10,17 @@ export default function LayoutWrapper({ children }) {
   const hideHeaderFooter = ["/login", "/signup"].includes(pathname);
 
 
-  const isDashboard = pathname.startsWith("/dashboard");
+  const isDashboard = pathname.startsWith("/user");
+  const isAdmin = pathname.startsWith("/admin");
+  const isCompany = pathname.startsWith("/company");
+
+
 
   return (
     <>
       {!hideHeaderFooter && <Header />}
       {children}
-      {!hideHeaderFooter && !isDashboard && <Footer />}
+      {!hideHeaderFooter && !isDashboard && !isAdmin && !isCompany && <Footer />}
     </>
   );
 }
