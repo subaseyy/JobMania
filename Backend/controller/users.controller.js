@@ -1,10 +1,13 @@
 const User = require("../models/user.model");
 const Profile = require("../models/profile.model");
+const bcrypt = require('bcryptjs');
+const profileModel = require("../models/profile.model");
+
 
 
 exports.getProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).populate("profile");
+    const user = await User.findById(req.user.id);
 
     if (!user) {
       return res.status(404).json({
@@ -20,7 +23,7 @@ exports.getProfile = async (req, res) => {
       message: "Profile fetched successfully",
       data: {
         user: {
-          name: user.name,
+          full_name: user.full_name,
           email: user.email,
           role: user.role,
         },
@@ -72,7 +75,7 @@ exports.updateProfile = async (req, res) => {
     }
 
     // === Core Field Updates ===
-    profile.full_name = full_name || profile.full_name || user.name;
+    profile.full_name = full_name || profile.full_name || user.full_name;
     profile.contact_number = contact_number || profile.contact_number;
     profile.resume_url = resume_url || profile.resume_url;
     profile.profile_picture = profile_picture || profile.profile_picture;
@@ -134,7 +137,7 @@ exports.updateProfile = async (req, res) => {
 
 exports.getAllProfiles = async (req, res) => {
   try {
-    const profiles = await Profile.find().populate("user", "name email role");
+    const profiles = await Profile.find().populate("user", "full_name email role");
     return res.status(200).json({
       status: 200,
       message: "All profiles fetched successfully",
@@ -164,7 +167,7 @@ exports.getProfileById = async (req, res) => {
       message: "Profile fetched successfully",
       data: {
         user: {
-          name: user.name,
+          full_name: user.full_name,
           email: user.email,
           role: user.role,
         },
@@ -275,14 +278,14 @@ exports.updateProfileById = async (req, res) => {
 
 exports.deleteProfileById = async (req, res) => {
   try {
-    const userId = req.params.id;
+    const profileId = req.params.id;
 
-    const user = await User.findByIdAndDelete(userId);
-    if (!user) {
-      return res.status(404).json({ status: 404, message: "User not found" });
+    const profile = await Profile.findByIdAndDelete(profileId);
+    if (!profile) {
+      return res.status(404).json({ status: 404, message: "Profile not found" });
     }
 
-    await Profile.findOneAndDelete({ user: userId });
+    await User.findOneAndDelete({ profile: profileId });
 
     return res.status(200).json({
       status: 200,
@@ -298,70 +301,13 @@ exports.deleteProfileById = async (req, res) => {
 };
 
 
-
-exports.createUserByAdmin = async (req, res) => {
-  try {
-    const { name, email, password, role } = req.body;
-
-    if (!name || !email || !password) {
-      return res.status(400).json({
-        status: 400,
-        message: "Name, email, and password are required",
-      });
-    }
-
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(409).json({
-        status: 409,
-        message: "User with this email already exists",
-      });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const user = new User({
-      name,
-      email,
-      password: hashedPassword,
-      role: role || "user",
-    });
-
-    await user.save();
-
-    // Optionally, create an empty profile for the new user
-    const profile = new Profile({ user: user._id, full_name: name });
-    await profile.save();
-
-    user.profile = profile._id;
-    await user.save();
-
-    return res.status(201).json({
-      status: 201,
-      message: "User created successfully",
-      data: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        isVerified: true
-      },
-    });
-  } catch (err) {
-    console.error("Error creating user by admin:", err);
-    return res.status(500).json({
-      status: 500,
-      message: "Server error while creating user",
-    });
-  }
-};
-
 exports.updateUserById = async (req, res) => {
   try {
     const userId = req.params.id;
-    const { name, email, role } = req.body;
+    const { full_name, email, role } = req.body;
 
-    if (!name && !email && !role) {
+
+    if (!full_name && !email && !role) {
       return res.status(400).json({
         status: 400,
         message: "At least one field (name, email, or role) must be provided",
@@ -388,7 +334,7 @@ exports.updateUserById = async (req, res) => {
       user.email = email;
     }
 
-    if (name) user.name = name;
+    if (full_name) user.full_name = full_name;
     if (role) user.role = role;
 
     await user.save();
@@ -398,7 +344,7 @@ exports.updateUserById = async (req, res) => {
       message: "User updated successfully",
       data: {
         id: user._id,
-        name: user.name,
+        full_name: user.full_name,
         email: user.email,
         role: user.role,
       },
@@ -408,6 +354,65 @@ exports.updateUserById = async (req, res) => {
     return res.status(500).json({
       status: 500,
       message: "Server error while updating user",
+    });
+  }
+};
+
+
+exports.createUserByAdmin = async (req, res) => {
+  try {
+    const { full_name, email, password, role } = req.body;
+
+    if (!full_name || !email || !password) {
+      return res.status(400).json({
+        status: 400,
+        message: "Full name, email, and password are required",
+      });
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({
+        status: 409,
+        message: "User with this email already exists",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = new User({
+      full_name,
+      email,
+      password: hashedPassword,
+      role: role || "user",
+      isVerified: true  // ✅ Mark email as verified automatically
+    });
+
+    await user.save();
+
+
+    const profile = new Profile({ user: user._id, full_name });
+    await profile.save();
+
+    user.profile = profile._id;
+    await user.save();
+
+    return res.status(201).json({
+      status: 201,
+      message: "User created successfully",
+      data: {
+        id: user._id,
+        full_name: user.full_name,
+        email: user.email,
+        role: user.role,
+        isVerified: user.isVerified
+      },
+    });
+  } catch (err) {
+    console.error("Error creating user by admin:", err);
+    return res.status(500).json({
+      status: 500,
+      message: "Server error while creating user",
     });
   }
 };
