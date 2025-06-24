@@ -189,13 +189,17 @@ export default function AddJobPage() {
             className="w-full border rounded px-4 py-2"
           />
 
-          <input
-            name="currency"
-            placeholder="Currency (e.g., NPR)"
-            value={form.currency}
-            onChange={handleChange}
-            className="w-full border rounded px-4 py-2"
-          />
+           <select
+                  id="currency"
+                  name="currency"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+                  value={form.currency}
+                  onChange={handleChange}
+                >
+                  <option value="NPR">NPR</option>
+                  <option value="USD">USD</option>
+                  <option value="INR">INR</option>
+                </select>
 
           <textarea
             name="description"
