@@ -148,48 +148,7 @@ export default function SearchBar({
           )}
         </div>
 
-        {/* Location Input */}
-        <div className="flex-1 relative" ref={locationRef}>
-          <div className="flex items-center w-full border-b border-[#D6DDEB] pb-2">
-            <MapPin className="min-w-5 text-[#25324B]" />
-            <input
-              type="text"
-              placeholder="Location"
-              className="w-full p-2 pl-3 outline-none text-[#25324B]"
-              value={locationTerm}
-              onChange={(e) => setLocationTerm(e.target.value)}
-              onFocus={() => setShowLocationDropdown(true)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            />
-            {locationTerm && (
-              <button
-                onClick={clearLocation}
-                className="p-1 rounded-full hover:bg-gray-100"
-              >
-                <X size={16} className="text-gray-400" />
-              </button>
-            )}
-          </div>
-
-          {showLocationDropdown && (
-            <div className="absolute z-10 mt-1 w-full bg-white rounded-md shadow-lg py-2 max-h-60 overflow-auto">
-              {locations
-                .filter((loc) =>
-                  loc.toLowerCase().includes(locationTerm.toLowerCase())
-                )
-                .map((location, index) => (
-                  <div
-                    key={index}
-                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
-                    onClick={() => handleLocationSelect(location)}
-                  >
-                    <MapPin size={14} className="mr-2 text-gray-400" />
-                    <span>{location}</span>
-                  </div>
-                ))}
-            </div>
-          )}
-        </div>
+       
 
         <button
           onClick={handleSearch}

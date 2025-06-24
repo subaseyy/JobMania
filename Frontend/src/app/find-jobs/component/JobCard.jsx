@@ -2,13 +2,13 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { tagColors } from "../utils/constants";
+
 import ApplyPopup from "./ApplyPopup";
 
 export default function JobCard({ job, viewMode, getCompanyByJobId }) {
   const [showApplyPopup, setShowApplyPopup] = useState(false);
 
-  const company = getCompanyByJobId?.(job.id) || {
+  const company = getCompanyByJobId?.(job._id) || {
     name: job.company,
     icon: job.icon,
     location: job.location,
@@ -22,22 +22,23 @@ export default function JobCard({ job, viewMode, getCompanyByJobId }) {
     setShowApplyPopup(false);
   };
 
-  const progressPercentage = Math.min(
-    100,
-    Math.round((job.applicants / job.capacity) * 100)
-  );
-  const Description = () => {
-    window.location.href = `/dashboard/job/component/${job.id}/job-description`;
+  const progressPercentage = job.capacity
+    ? Math.min(100, Math.round((job.applicants / job.capacity) * 100))
+    : 0;
+
+  const navigateToJob = () => {
+    window.location.href = `/dashboard/job/component/${job._id}/job-description`;
   };
+
   return (
     <div
-      onClick={() => Description()}
+      onClick={navigateToJob}
       className="flex flex-col sm:flex-row items-start gap-6 border-[1px] border-[#D6DDEB] p-6 rounded-lg hover:shadow-md transition-shadow duration-300 cursor-pointer"
     >
-      <Link href={`/find-jobs?company=${encodeURIComponent(company.name)}`}>
-        <div className="flex-shrink-0 cursor-pointer">
+      <Link href={`/find-jobs?company=${encodeURIComponent(company.name)}`} onClick={(e) => e.stopPropagation()}>
+        <div className="flex-shrink-0">
           <Image
-            src={company.icon || "/jobs/default-company.png"}
+            src={"/jobs/sample.png"}
             alt={company.name}
             width={64}
             height={64}
@@ -55,6 +56,7 @@ export default function JobCard({ job, viewMode, getCompanyByJobId }) {
         <div className="font-epilogue font-[400] text-base leading-[160%] text-[#515B6F] pb-3 pt-1">
           <Link
             href={`/find-jobs?company=${encodeURIComponent(company.name)}`}
+            onClick={(e) => e.stopPropagation()}
             className="hover:text-[#4640DE] hover:underline transition-colors"
           >
             {company.name}
@@ -64,27 +66,35 @@ export default function JobCard({ job, viewMode, getCompanyByJobId }) {
 
         {/* Job Tags */}
         <div className="flex flex-wrap gap-2">
-          <span className="font-epilogue font-[600] text-sm leading-[160%] bg-[#56CDAD1A] text-[#56CDAD] px-3 py-1 rounded-full">
-            {job.type}
-          </span>
-          <span className="font-epilogue font-[600] text-sm leading-[160%] bg-[#FFB8361A] text-[#FFB836] px-3 py-1 rounded-full">
-            {job.category}
-          </span>
-          <span className="font-epilogue font-[600] text-sm leading-[160%] bg-[#E051511A] text-[#E05151] px-3 py-1 rounded-full">
-            {job.level === "Entry"
-              ? "Entry Level"
-              : job.level === "Mid"
-              ? "Mid Level"
-              : "Senior Level"}
-          </span>
-          <span className="font-epilogue font-[600] text-sm leading-[160%] bg-[#4640DE1A] text-[#4640DE] px-3 py-1 rounded-full">
-            Rs {job.salary.toLocaleString()}
-          </span>
-          {job.tags.map((tag) => (
+          {job.type && (
+            <span className="font-epilogue font-[600] text-sm leading-[160%] bg-[#56CDAD1A] text-[#56CDAD] px-3 py-1 rounded-full">
+              {job.type}
+            </span>
+          )}
+          {job.category && (
+            <span className="font-epilogue font-[600] text-sm leading-[160%] bg-[#FFB8361A] text-[#FFB836] px-3 py-1 rounded-full">
+              {job.category}
+            </span>
+          )}
+          {job.level && (
+            <span className="font-epilogue font-[600] text-sm leading-[160%] bg-[#E051511A] text-[#E05151] px-3 py-1 rounded-full">
+              {job.level === "Entry"
+                ? "Entry Level"
+                : job.level === "Mid"
+                ? "Mid Level"
+                : "Senior Level"}
+            </span>
+          )}
+          {job.salaryMin && (
+            <span className="font-epilogue font-[600] text-sm leading-[160%] bg-[#4640DE1A] text-[#4640DE] px-3 py-1 rounded-full">
+              Rs {job.salaryMin.toLocaleString()} - {job.salaryMax.toLocaleString()}
+            </span>
+          )}
+          {(job.requirements || []).map((tag) => (
             <span
               key={tag}
               className={`font-epilogue font-[600] text-sm leading-[160%] px-3 py-1 rounded-full ${
-                tagColors[tag] || "bg-gray-100 text-gray-800"
+               "bg-gray-100 text-gray-800"
               }`}
             >
               {tag}
@@ -100,7 +110,10 @@ export default function JobCard({ job, viewMode, getCompanyByJobId }) {
           </span>
         ) : (
           <button
-            onClick={applyJob}
+            onClick={(e) => {
+              e.stopPropagation();
+              applyJob();
+            }}
             className="bg-[#4640DE] text-white font-medium w-full py-2 rounded-sm hover:bg-[#3932b8] transition-colors duration-300 ease-in-out cursor-pointer"
           >
             Apply Now
@@ -108,24 +121,8 @@ export default function JobCard({ job, viewMode, getCompanyByJobId }) {
         )}
 
         {/* Capacity Progress Bar */}
-        <div className="w-full mt-4">
-          <div className="flex justify-between text-sm mb-1">
-            <span className="font-semibold text-gray-900">
-              {job.applicants} applied
-            </span>
-            <span className="text-gray-500">{job.capacity} positions</span>
-          </div>
-          <div className="w-full h-2 bg-gray-200 rounded-full">
-            <div
-              className="h-full bg-[#56CDAD] rounded-full"
-              style={{ width: `${progressPercentage}%` }}
-            />
-          </div>
-          <p className="text-xs text-gray-500 mt-1 text-right">
-            {progressPercentage}% filled
-          </p>
-        </div>
-      </div>
+         
+      </div> 
 
       {showApplyPopup && (
         <ApplyPopup job={job} company={company} onClose={closePopup} />

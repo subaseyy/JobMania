@@ -25,7 +25,7 @@ export default function HeroSection({
           </span>
         </h1>
         <p className="font-epilogue font-[400] text-lg leading-[160%] text-[#515B6F] mb-4">
-          Find your next career at companies like HubSpot, Nike, and Dropbox
+          Find your next career
         </p>
 
         <SearchBar
