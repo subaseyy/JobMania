@@ -90,7 +90,7 @@ export default function ApplyPopup({ job, company, onClose }) {
           <div className="flex items-center">
             <div>
               <Image
-                src={company.icon || "/jobs/default-company.png"}
+                src={company.icon || "/jobs/sample.png"}
                 alt={company.name}
                 width={48}
                 height={48}

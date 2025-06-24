@@ -4,7 +4,6 @@ import HeroSection from "./component/HeroSection";
 import JobList from "./component/JobList";
 import { FilterSection } from "./component/FilterSection";
 import { MobileFilterButton } from "./component/MobileFilterButton";
-import { jobsData } from "./utils/constants";
 import { companiesData } from "../find-companies/utils/constants";
 import { useSearchParams } from "next/navigation";
 
@@ -13,15 +12,34 @@ export default function JobBoard() {
   const companyParam = searchParams?.get("company") || "";
   const categoryParam = searchParams?.get("category") || "";
 
+  const [allJobs, setAllJobs] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [locationTerm, setLocationTerm] = useState("");
   const [employmentTypes, setEmploymentTypes] = useState([]);
   const [categories, setCategories] = useState([]);
   const [jobLevels, setJobLevels] = useState([]);
   const [salaryRanges, setSalaryRanges] = useState([]);
-  const [sortOption, setSortOption] = useState("Most relevant");
+
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const res = await fetch("http://localhost:5050/api/jobs/jobs");
+        const data = await res.json();
+        if (res.ok) {
+          setAllJobs(data.data);
+        } else {
+          console.error("Failed to fetch jobs:", data.message);
+        }
+      } catch (error) {
+        console.error("Fetch error:", error);
+      }
+    };
+
+    fetchJobs();
+  }, []);
 
   const getCompanyByJobId = (jobId) => {
     return companiesData.find((company) => company.jobs.includes(jobId));
@@ -35,79 +53,85 @@ export default function JobBoard() {
     }
   };
 
-  const filteredJobs = jobsData.filter((job) => {
-    // Filter by company
-    if (companyParam) {
-      const company = companiesData.find(
-        (c) =>
-          c.name.toLowerCase() ===
-          decodeURIComponent(companyParam).toLowerCase()
-      );
-      if (!company?.jobs.includes(job.id)) return false;
-    }
+  const filteredJobs = allJobs.filter((job) => {
+  // Must be active
+  if (!job.isActive) return false;
 
-    // Filter by category from URL param
-    if (
-      categoryParam &&
-      job.category.toLowerCase() !== categoryParam.toLowerCase()
-    ) {
+  // Filter by company param from URL
+  if (
+    companyParam &&
+    job.company?.toLowerCase() !== companyParam.toLowerCase()
+  ) {
+    return false;
+  }
+
+  // Filter by category param from URL
+  if (
+    categoryParam &&
+    job.category?.toLowerCase() !== categoryParam.toLowerCase()
+  ) {
+    return false;
+  }
+
+  // Search term: title or company
+  const matchesSearch =
+    searchTerm === "" ||
+    job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    job.company?.toLowerCase().includes(searchTerm.toLowerCase());
+
+  // Location match
+  const matchesLocation =
+    locationTerm === "" ||
+    job.location?.toLowerCase().includes(locationTerm.toLowerCase());
+
+  // Employment Type
+  const matchesEmploymentType =
+    employmentTypes.length === 0 || employmentTypes.includes(job.type);
+
+  // Category (from UI filters)
+  const matchesCategory =
+    categories.length === 0 || categories.includes(job.category || "");
+
+  // Job Level
+  const matchesJobLevel =
+    jobLevels.length === 0 ||
+    jobLevels.some((level) => {
+      if (level === "Entry Level") return job.level === "Entry";
+      if (level === "Mid Level") return job.level === "Mid";
+      if (level === "Senior Level") return job.level === "Senior";
       return false;
-    }
+    });
 
-    const matchesSearch =
-      job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.company.toLowerCase().includes(searchTerm.toLowerCase());
+  // Salary Range
+const matchesSalaryRange =
+  salaryRanges.length === 0 ||
+  (salaryRanges.includes("Rs 10,000 - Rs 20,000") &&
+    job.salaryMin >= 10000 &&
+    job.salaryMax <= 20000) ||
+  (salaryRanges.includes("Rs 20,000 - Rs 40,000") &&
+    job.salaryMin >= 20000 &&
+    job.salaryMax <= 40000) ||
+  (salaryRanges.includes("Rs 40,000 - Rs 60,000") &&
+    job.salaryMin >= 40000 &&
+    job.salaryMax <= 60000) ||
+  (salaryRanges.includes("Rs 60,000 or above") &&
+    job.salaryMin >= 60000);
 
-    const matchesLocation = job.location
-      .toLowerCase()
-      .includes(locationTerm.toLowerCase());
+  // Final return if all matched
+  return (
+    matchesSearch &&
+    matchesLocation &&
+    matchesEmploymentType &&
+    matchesCategory &&
+    matchesJobLevel &&
+    matchesSalaryRange
+  );
+});
 
-    const matchesEmploymentType =
-      employmentTypes.length === 0 || employmentTypes.includes(job.type);
-
-    const matchesCategory =
-      categories.length === 0 || categories.includes(job.category);
-
-    const matchesJobLevel =
-      jobLevels.length === 0 ||
-      jobLevels.some((level) => {
-        if (level === "Entry Level") return job.level === "Entry";
-        if (level === "Mid Level") return job.level === "Mid";
-        if (level === "Senior Level") return job.level === "Senior";
-        return job.level === level;
-      });
-
-    const matchesSalaryRange =
-      salaryRanges.length === 0 ||
-      (salaryRanges.includes("Rs 70,000 - Rs 100,000") &&
-        job.salary >= 70000 &&
-        job.salary <= 100000) ||
-      (salaryRanges.includes("Rs 100,000 - Rs 150,000") &&
-        job.salary >= 100000 &&
-        job.salary <= 150000) ||
-      (salaryRanges.includes("Rs 150,000 - Rs 200,000") &&
-        job.salary >= 150000 &&
-        job.salary <= 200000) ||
-      (salaryRanges.includes("Rs 300,000 or above") && job.salary >= 300000);
-
-    return (
-      matchesSearch &&
-      matchesLocation &&
-      matchesEmploymentType &&
-      matchesCategory &&
-      matchesJobLevel &&
-      matchesSalaryRange
-    );
-  });
 
   useEffect(() => {
-    if (companyParam) {
-      setSearchTerm(decodeURIComponent(companyParam));
-    }
-
-    if (categoryParam) {
-      setCategories([decodeURIComponent(categoryParam)]);
-    }
+    if (companyParam) setSearchTerm(companyParam);
+    if (categoryParam) setCategories([categoryParam]);
   }, [companyParam, categoryParam]);
 
   useEffect(() => {
@@ -119,18 +143,13 @@ export default function JobBoard() {
     categories,
     jobLevels,
     salaryRanges,
-    sortOption,
+
     companyParam,
     categoryParam,
   ]);
 
   useEffect(() => {
-    if (showMobileFilters) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "auto";
-    }
-
+    document.body.style.overflow = showMobileFilters ? "hidden" : "auto";
     return () => {
       document.body.style.overflow = "auto";
     };
@@ -153,25 +172,20 @@ export default function JobBoard() {
         />
 
         <FilterSection
-          showMobileFilters={showMobileFilters}
-          setShowMobileFilters={setShowMobileFilters}
-          employmentTypes={employmentTypes}
-          setEmploymentTypes={setEmploymentTypes}
-          categories={categories}
-          setCategories={setCategories}
-          jobLevels={jobLevels}
-          setJobLevels={setJobLevels}
-          salaryRanges={salaryRanges}
-          setSalaryRanges={setSalaryRanges}
-          toggleFilter={toggleFilter}
-          jobsData={jobsData}
-          companyFilter={companyParam}
-        />
+  showMobileFilters={showMobileFilters}
+  setShowMobileFilters={setShowMobileFilters}
+  employmentTypes={employmentTypes}
+  setEmploymentTypes={setEmploymentTypes}
+  salaryRanges={salaryRanges}
+  setSalaryRanges={setSalaryRanges}
+  toggleFilter={toggleFilter}
+  jobsData={allJobs}
+/>
 
         <JobList
           filteredJobs={filteredJobs}
-          sortOption={sortOption}
-          setSortOption={setSortOption}
+
+
           currentPage={currentPage}
           setCurrentPage={setCurrentPage}
           setSearchTerm={setSearchTerm}
