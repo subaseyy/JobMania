@@ -97,20 +97,34 @@ const Header = () => {
               </p>
             </Link>
             {isAuthenticated && (
-              <>
-                <Link href="/user/dashboard-overview">
-                  <p
-                    className={`font-epilogue font-[500] text-sm sm:text-base transition-colors ${
-                      isActive("/user/*")
-                        ? "text-[#4640DE] border-b-4 border-[#4640DE] pb-3"
-                        : "text-[#515B6F] hover:text-[#4640DE] pb-3"
-                    }`}
-                  >
-                    Dashboard
-                  </p>
-                </Link>
-              </>
-            )}
+  <>
+    <Link
+      href={
+        auth.role === "admin"
+          ? "/admin/dashboard"
+          : auth.role === "company"
+          ? "/company/dashboard"
+          : "/user/dashboard"
+      }
+    >
+      <p
+        className={`font-epilogue font-[500] text-sm sm:text-base transition-colors ${
+          isActive(
+            auth.role === "admin"
+              ? "/admin/*"
+              : auth.role === "company"
+              ? "/company/*"
+              : "/user/*"
+          )
+            ? "text-[#4640DE] border-b-4 border-[#4640DE] pb-3"
+            : "text-[#515B6F] hover:text-[#4640DE] pb-3"
+        }`}
+      >
+        Dashboard
+      </p>
+    </Link>
+  </>
+)}
           </div>
         </div>
 

@@ -59,7 +59,10 @@ export default function AllJobsPage() {
       isActive: job.isActive ?? true,
     });
     setEditing(job);
+    console.log("setted edtign Job to true");
+
     setShowModal(true);
+    console.log("setted show modal to true");
   };
 
   const handleChange = (e) => {
@@ -122,10 +125,11 @@ export default function AllJobsPage() {
     }
   };
 
-  const filteredJobs = jobs.filter((job) =>
-    job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    job.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    job.location.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredJobs = jobs.filter(
+    (job) =>
+      job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      job.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      job.location.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const paginatedJobs = filteredJobs.slice(
@@ -156,32 +160,66 @@ export default function AllJobsPage() {
           <table className="w-full min-w-[600px]">
             <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Title
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Company
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Location
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Type
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {paginatedJobs.map((j) => (
                 <tr key={j._id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{j.title}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-600">{j.company || "N/A"}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">{j.location}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">{j.type}</span>
+                  <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
+                    {j.title}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                    {j.company || "N/A"}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">
+                    {j.location}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${j.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>{j.isActive ? "Active" : "Inactive"}</span>
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      {j.type}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span
+                      className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        j.isActive
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {j.isActive ? "Active" : "Inactive"}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end space-x-6">
-                      <button onClick={() => openEdit(j)} className="text-[#4640DE] hover:text-[#3a35c7] flex items-center">
+                      <button
+                        onClick={() => openEdit(j)}
+                        className="text-[#4640DE] hover:text-[#3a35c7] flex items-center"
+                      >
                         <Edit className="mr-1 h-4 w-4" /> Edit
                       </button>
-                      <button onClick={() => handleDelete(j._id)} className="text-red-600 hover:text-red-800 flex items-center">
+                      <button
+                        onClick={() => handleDelete(j._id)}
+                        className="text-red-600 hover:text-red-800 flex items-center"
+                      >
                         <Trash2 className="mr-1 h-4 w-4" /> Delete
                       </button>
                     </div>
@@ -193,7 +231,7 @@ export default function AllJobsPage() {
         </div>
       </div>
 
-       <div className="flex justify-end mt-4 space-x-4">
+      <div className="flex justify-end mt-4 space-x-4">
         <button
           className="px-4 py-2 bg-gray-100 rounded hover:bg-gray-200"
           disabled={currentPage === 1}
@@ -201,7 +239,9 @@ export default function AllJobsPage() {
         >
           Prev
         </button>
-        <span className="text-sm text-gray-700 pt-2">Page {currentPage} of {totalPages}</span>
+        <span className="text-sm text-gray-700 pt-2">
+          Page {currentPage} of {totalPages}
+        </span>
         <button
           className="px-4 py-2 bg-gray-100 rounded hover:bg-gray-200"
           disabled={currentPage === totalPages}
@@ -210,6 +250,227 @@ export default function AllJobsPage() {
           Next
         </button>
       </div>
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-2xl">
+            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+              <h2 className="text-lg font-semibold text-gray-900">Edit Job</h2>
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-gray-400 hover:text-gray-500"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              {/* Title */}
+              <div>
+                <label
+                  htmlFor="title"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Job Title
+                </label>
+                <input
+                  id="title"
+                  name="title"
+                  placeholder="Frontend Developer"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+                  value={form.title}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              {/* Location */}
+              <div>
+                <label
+                  htmlFor="location"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Location
+                </label>
+                <input
+                  id="location"
+                  name="location"
+                  placeholder="Kathmandu or Remote"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+                  value={form.location}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              {/* Type */}
+              <div>
+                <label
+                  htmlFor="type"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Job Type
+                </label>
+                <select
+                  id="type"
+                  name="type"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+                  value={form.type}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="">Select Job Type</option>
+                  <option value="full-time">Full-time</option>
+                  <option value="part-time">Part-time</option>
+                  <option value="remote">Remote</option>
+                  <option value="internship">Internship</option>
+                  <option value="contract">Contract</option>
+                </select>
+              </div>
+
+              {/* Salary Range */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label
+                    htmlFor="salaryMin"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Min Salary
+                  </label>
+                  <input
+                    type="number"
+                    id="salaryMin"
+                    name="salaryMin"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+                    value={form.salaryMin}
+                    onChange={handleChange}
+                    placeholder="12000"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="salaryMax"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Max Salary
+                  </label>
+                  <input
+                    type="number"
+                    id="salaryMax"
+                    name="salaryMax"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+                    value={form.salaryMax}
+                    onChange={handleChange}
+                    placeholder="20000"
+                  />
+                </div>
+              </div>
+
+              {/* Currency */}
+              <div>
+                <label
+                  htmlFor="currency"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Currency
+                </label>
+                <select
+                  id="currency"
+                  name="currency"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+                  value={form.currency}
+                  onChange={handleChange}
+                >
+                  <option value="NPR">NPR</option>
+                  <option value="USD">USD</option>
+                  <option value="INR">INR</option>
+                </select>
+              </div>
+
+              {/* Description */}
+              <div>
+                <label
+                  htmlFor="description"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Job Description
+                </label>
+                <textarea
+                  id="description"
+                  name="description"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg resize-none"
+                  rows={4}
+                  value={form.description}
+                  onChange={handleChange}
+                  placeholder="Enter detailed job description"
+                />
+              </div>
+
+              {/* Requirements */}
+              <div>
+                <label
+                  htmlFor="requirements"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Requirements (comma separated)
+                </label>
+                <input
+                  id="requirements"
+                  name="requirements"
+                  placeholder="React, Node.js, MongoDB"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+                  value={form.requirements}
+                  onChange={handleChange}
+                />
+              </div>
+
+              {/* isActive Toggle */}
+              <div>
+                <label
+                  htmlFor="isActive"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Job Status
+                </label>
+                <select
+                  id="isActive"
+                  name="isActive"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+                  value={form.isActive ? "true" : "false"}
+                  onChange={handleChange}
+                >
+                  <option value="true">Active</option>
+                  <option value="false">Inactive</option>
+                </select>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="px-5 py-2.5 border border-gray-300 rounded-lg"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isProcessing}
+                  className="px-5 py-2.5 bg-[#4640DE] text-white rounded-lg flex items-center"
+                >
+                  {isProcessing ? (
+                    "Updating..."
+                  ) : (
+                    <>
+                      <CheckCircle className="mr-2 h-4 w-4" /> Update Job
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
