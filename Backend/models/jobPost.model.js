@@ -16,6 +16,11 @@ const jobPostSchema = new mongoose.Schema({
     type: String, 
     required: true 
   },
+  isActive :{
+    type: Boolean,
+    default: true, 
+    required: true
+},
 
   description: { 
     type: String, 

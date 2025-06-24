@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { fetchApplications } from "@/app/user/utils/constants";
 import { subDays } from "date-fns";
-import DateFilter from "../dashboard-overview/component/DateFilter";
+import DateFilter from "../dashboard/component/DateFilter";
 
 const PAGE_SIZE = 6;
 

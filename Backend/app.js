@@ -21,7 +21,7 @@ app.use(express.json());
 
 
 // Routes
-app.use(cors({ origin: 'http://localhost:3000', credentials: true })); // ⬅️ allow frontend origin
+app.use(cors({ origin: 'http://localhost:3000', credentials: true })); 
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users',userRoutes );

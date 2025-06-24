@@ -12,6 +12,9 @@ export default function AllUsersPage() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ full_name: "", email: "" });
   const [isProcessing, setIsProcessing] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const usersPerPage = 25;
 
   useEffect(() => {
     async function fetchUsers() {
@@ -22,7 +25,6 @@ export default function AllUsersPage() {
         });
         if (!res.ok) throw new Error("Failed to fetch users");
         const data = await res.json();
-        console.log("Fetched users:", data);
         setUsers(data.data || []);
       } catch (err) {
         console.error("Error fetching users:", err);
@@ -36,6 +38,21 @@ export default function AllUsersPage() {
     ? users.filter((u) => u.user?.role === "company")
     : [];
 
+  const filteredCompany = company.filter((u) => {
+    const name = u.user?.full_name || u.full_name || "";
+    const email = u.user?.email || "";
+    return (
+      name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      email.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
+
+  const totalPages = Math.ceil(filteredCompany.length / usersPerPage);
+  const paginatedCompany = filteredCompany.slice(
+    (currentPage - 1) * usersPerPage,
+    currentPage * usersPerPage
+  );
+
   const openEdit = (user) => {
     setForm({
       full_name: user.user?.full_name || user.full_name || "",
@@ -45,8 +62,7 @@ export default function AllUsersPage() {
     setShowModal(true);
   };
 
-  const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -64,11 +80,7 @@ export default function AllUsersPage() {
       });
       if (!res.ok) throw new Error("Update failed");
       const updated = await res.json();
-      setUsers(
-        users.map((u) =>
-          u._id === editing._id ? { ...u, user: updated } : u
-        )
-      );
+      setUsers(users.map((u) => (u._id === editing._id ? { ...u, user: updated } : u)));
       setShowModal(false);
     } catch (err) {
       alert("Failed to update user");
@@ -92,12 +104,7 @@ export default function AllUsersPage() {
   };
 
   const getRoleColor = (role) => {
-    switch (role) {
-      case "company":
-        return "bg-gray-100 text-gray-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
+    return "bg-gray-100 text-gray-800";
   };
 
   const getStatusColor = (status) => {
@@ -118,50 +125,29 @@ export default function AllUsersPage() {
           <Users className="mr-2 h-6 w-6 text-[#4640DE]" />
           Company Management
         </h1>
+        <input
+          type="text"
+          placeholder="Search by name or email"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="px-4 py-2 border rounded w-full sm:w-80"
+        />
       </div>
 
-      {/* Mobile View */}
-      <div className="sm:hidden">
-        {company.length === 0 && (
-          <div className="text-center text-gray-500 py-8">No users found.</div>
-        )}
-        {company.map((user) => (
-          <UserCard
-            key={user._id}
-            user={user}
-            onEdit={openEdit}
-            onDelete={() => handleDelete(user._id)}
-            getRoleColor={getRoleColor}
-            getStatusColor={getStatusColor}
-          />
-        ))}
-      </div>
-
-      {/* Desktop View */}
       <div className="hidden sm:block bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto max-w-full">
           <table className="w-full min-w-[600px]">
             <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Email
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Role
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {company.map((u) => (
+              {paginatedCompany.map((u) => (
                 <tr key={u._id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
                     {u.user?.full_name || u.full_name}
@@ -170,42 +156,28 @@ export default function AllUsersPage() {
                     {u.user?.email}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(
-                        u.user?.role
-                      )}`}
-                    >
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(u.user?.role)}`}>
                       {u.user?.role}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                        u.status
-                      )}`}
-                    >
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(u.status)}`}>
                       {u.status || "active"}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end space-x-6">
-                      <button
-                        onClick={() => openEdit(u)}
-                        className="text-[#4640DE] hover:text-[#3a35c7] flex items-center"
-                      >
+                      <button onClick={() => openEdit(u)} className="text-[#4640DE] hover:text-[#3a35c7] flex items-center">
                         <Edit className="mr-1 h-4 w-4" /> Edit
                       </button>
-                      <button
-                        onClick={() => handleDelete(u._id)}
-                        className="text-red-600 hover:text-red-800 flex items-center"
-                      >
+                      <button onClick={() => handleDelete(u._id)} className="text-red-600 hover:text-red-800 flex items-center">
                         <Trash2 className="mr-1 h-4 w-4" /> Delete
                       </button>
                     </div>
                   </td>
                 </tr>
               ))}
-              {company.length === 0 && (
+              {paginatedCompany.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
                     No Company found.
@@ -216,6 +188,25 @@ export default function AllUsersPage() {
           </table>
         </div>
       </div>
+
+      <div className="flex justify-end mt-4 space-x-4">
+        <button
+          className="px-4 py-2 bg-gray-100 rounded hover:bg-gray-200"
+          disabled={currentPage === 1}
+          onClick={() => setCurrentPage((p) => p - 1)}
+        >
+          Prev
+        </button>
+        <span className="text-sm text-gray-700 pt-2">Page {currentPage} of {totalPages}</span>
+        <button
+          className="px-4 py-2 bg-gray-100 rounded hover:bg-gray-200"
+          disabled={currentPage === totalPages}
+          onClick={() => setCurrentPage((p) => p + 1)}
+        >
+          Next
+        </button>
+      </div>
+
 
       {/* Modal */}
       {showModal && (

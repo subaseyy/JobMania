@@ -51,11 +51,71 @@ exports.deleteJobById = async (req, res) => {
   }
 };
 
+exports.createJobByAdmin = async (req, res) => {
+
+  try {
+    const {
+      title,
+      company,
+      location,
+      type,
+      description,
+      salaryMin,
+      salaryMax,
+      currency,
+      requirements,
+      employer,
+    } = req.body;
+
+    if (!title || !company || !location || !type || !description || !employer) {
+      return res.status(400).json({
+        status: 400,
+        message: "Missing required fields",
+      });
+    }
+
+    const newJob = await Job.create({
+      employer,
+      title,
+      company,
+      location,
+      type,
+      description,
+      salaryMin,
+      salaryMax,
+      currency,
+      requirements,
+    });
+
+    res.status(201).json({
+      status: 201,
+      message: "Job created successfully",
+      data: newJob,
+    });
+  } catch (err) {
+    console.error("Error creating job:", err);
+    res.status(500).json({ status: 500, message: "Server error" });
+  }
+};
+
+
+exports.updateJobStatus = async (req, res) => {
+  const { id } = req.params;
+  const { isActive } = req.body;
+
+  const job = await Job.findById(id);
+  if (!job) return res.status(404).json({ message: "Job not found" });
+
+  job.isActive = isActive;
+  await job.save();
+
+  res.status(200).json({ message: `Job status updated`, data: job });
+};
 
 // Get all active jobs (for users)
 exports.getPublicJobs = async (req, res) => {
   try {
-    const jobs = await Job.find({ isActive: true });
+    const jobs = await Job.find({ isActive : true });
     return res.status(200).json({
       status: 200,
       message: "Available jobs fetched successfully",

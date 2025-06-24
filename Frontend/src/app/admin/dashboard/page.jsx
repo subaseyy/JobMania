@@ -11,40 +11,77 @@ import {
   ChevronRight,
   LayoutDashboard,
 } from "lucide-react";
-import {
-  ANALYTICS,
-  DUMMY_COMPANIES,
-  DUMMY_JOBS,
-  DUMMY_USERS,
-} from "../utils/constant";
 import StatCard from "./component/StatCard";
 import DashboardCard from "./component/DashboardCard";
 import EmptyState from "./component/EmptyState";
 import ListItem from "./component/ListItem";
+import Cookies from "js-cookie";
+
+const API_URL = "http://localhost:5050/api";
 
 export default function AdminDashboard() {
   const router = useRouter();
 
-  // Load from localStorage, fallback to dummy if empty
   const [companies, setCompanies] = useState([]);
   const [jobs, setJobs] = useState([]);
   const [users, setUsers] = useState([]);
-  const [analytics] = useState(ANALYTICS);
 
   useEffect(() => {
-    let storedCompanies = JSON.parse(localStorage.getItem("companies") || "[]");
-    let storedJobs = JSON.parse(localStorage.getItem("jobs") || "[]");
-    let storedUsers = JSON.parse(localStorage.getItem("users") || "[]");
+    async function fetchDashboardData() {
+      const token = Cookies.get("token");
 
-    if (storedCompanies.length === 0) storedCompanies = DUMMY_COMPANIES;
-    if (storedJobs.length === 0) storedJobs = DUMMY_JOBS;
-    if (storedUsers.length === 0) storedUsers = DUMMY_USERS;
+      try {
+        const [userRes, jobRes] = await Promise.all([
+          fetch(`${API_URL}/users/admin/profiles`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch(`${API_URL}/jobs/admin/jobs`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch(`${API_URL}/users/admin/profiles`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          
+        ]);
 
-    setCompanies(storedCompanies);
-    setJobs(storedJobs);
-    setUsers(storedUsers);
+        const userData = await userRes.json();
+        const jobData = await jobRes.json();
+
+
+        const filteredCompanies = (userData.data || []).filter(
+          (u) => u.user?.role === "company"
+        );
+        const filteredUser = (userData.data || []).filter(
+          (u) => u.user?.role === "jobseeker"
+        );
+
+
+        setCompanies(filteredCompanies);
+        setJobs(jobData.data || []);
+        setUsers(filteredUser);
+      } catch (error) {
+        console.error("Dashboard fetch error:", error);
+      }
+    }
+
+    fetchDashboardData();
   }, []);
 
+  const getAnalytics = () => {
+    const totalUsers = users.length;
+    const totalCompanies = companies.length;
+    const totalJobs = jobs.length;
+    const activeJobs = jobs.filter((j) => j.isActive).length;
+
+    return {
+      totalUsers,
+      totalCompanies,
+      totalJobs,
+      activeJobs,
+    };
+  };
+
+  const analytics = getAnalytics();
   const recentCompanies = companies.slice(0, 3);
   const recentJobs = jobs.slice(0, 3);
   const recentUsers = users.slice(0, 3);
@@ -83,31 +120,29 @@ export default function AdminDashboard() {
         <StatCard
           icon={<Building2 className="h-6 w-6 text-[#4640DE]" />}
           title="Total Companies"
-          value={companies.length}
-          change={analytics.companiesGrowth}
+          value={analytics.totalCompanies}
+          change={0}
           onClick={() => router.push("/admin/allcompany")}
         />
         <StatCard
           icon={<Briefcase className="h-6 w-6 text-[#00C853]" />}
           title="Total Jobs"
-          value={jobs.length}
-          change={analytics.jobsGrowth}
+          value={analytics.totalJobs}
+          change={0}
           onClick={() => router.push("/admin/alljobs")}
         />
         <StatCard
           icon={<Users className="h-6 w-6 text-[#FF6D00]" />}
           title="Total Users"
-          value={users.length}
-          change={analytics.usersGrowth}
+          value={analytics.totalUsers}
+          change={0}
           onClick={() => router.push("/admin/allusers")}
         />
         <StatCard
           icon={<Activity className="h-6 w-6 text-[#6200EA]" />}
           title="Active Listings"
-          value={
-            jobs.filter((j) => j.status?.toLowerCase() === "active").length
-          }
-          change={10}
+          value={analytics.activeJobs}
+          change={0}
           onClick={() => router.push("/admin/alljobs?status=active")}
         />
       </div>
@@ -120,11 +155,11 @@ export default function AdminDashboard() {
           <div className="space-y-4">
             {recentCompanies.map((company) => (
               <ListItem
-                key={company.id}
-                title={company.name}
-                subtitle={company.industry}
-                meta={company.email}
-                onClick={() => router.push(`/admin/allcompany/${company.id}`)}
+                key={company._id}
+                title={company.user?.full_name}
+                subtitle={company.user?.email}
+                meta={company.user?.role}
+                onClick={() => router.push(`/admin/allcompany/${company._id}`)}
               />
             ))}
             {recentCompanies.length === 0 && (
@@ -140,12 +175,12 @@ export default function AdminDashboard() {
           <div className="space-y-4">
             {recentJobs.map((job) => (
               <ListItem
-                key={job.id}
+                key={job._id}
                 title={job.title}
                 subtitle={job.company}
                 meta={`${job.type} • ${job.location}`}
-                status={job.status}
-                onClick={() => router.push(`/admin/alljobs/${job.id}`)}
+                status={job.isActive ? "Active" : "Inactive"}
+                onClick={() => router.push(`/admin/alljobs/${job._id}`)}
               />
             ))}
             {recentJobs.length === 0 && (
@@ -161,12 +196,11 @@ export default function AdminDashboard() {
           <div className="space-y-4">
             {recentUsers.map((user) => (
               <ListItem
-                key={user.id}
-                title={user.name}
+                key={user._id}
+                title={user.full_name || user.name}
                 subtitle={user.role}
                 meta={user.email}
-                status={user.status}
-                onClick={() => router.push(`/admin/allusers/${user.id}`)}
+                onClick={() => router.push(`/admin/allusers/${user._id}`)}
               />
             ))}
             {recentUsers.length === 0 && (
@@ -182,18 +216,17 @@ export default function AdminDashboard() {
         className="mb-8"
       >
         <div className="space-y-4">
-          {analytics.recentActivity.map((activity) => (
+          {[...jobs.slice(0, 3)].map((job) => (
             <div
-              key={activity.id}
+              key={job._id}
               className="flex items-start gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors"
             >
               <div className="mt-1 flex-shrink-0 h-2 w-2 rounded-full bg-[#4640DE]"></div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">
-                  {activity.action}{" "}
-                  <span className="text-[#4640DE]">{activity.entity}</span>
+                  Job updated: <span className="text-[#4640DE]">{job.title}</span>
                 </p>
-                <p className="text-sm text-gray-500">{activity.time}</p>
+                <p className="text-sm text-gray-500">{job.location}</p>
               </div>
               <ChevronRight className="h-4 w-4 text-gray-400" />
             </div>
@@ -203,4 +236,3 @@ export default function AdminDashboard() {
     </div>
   );
 }
-

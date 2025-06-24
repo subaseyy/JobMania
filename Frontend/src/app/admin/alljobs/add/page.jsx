@@ -2,221 +2,242 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Plus, CheckCircle } from "lucide-react";
+import Cookies from "js-cookie";
+
+const API_URL = "http://localhost:5050/api";
 
 export default function AddJobPage() {
   const router = useRouter();
   const [form, setForm] = useState({
     title: "",
+    employer: "", // this holds the user ID
     company: "",
     location: "",
     type: "",
+    salaryMin: "",
+    salaryMax: "",
+    currency: "NPR",
+    description: "",
+    requirements: "",
+    isActive: true,
   });
+
+  const [users, setUsers] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [companies, setCompanies] = useState([]);
 
-  // Fetch existing companies on component mount
   useEffect(() => {
-    // Replace this with your actual API call to fetch companies
-    const fetchCompanies = async () => {
+    async function fetchUsers() {
       try {
-        // Simulated data - replace with real API call
-        const mockCompanies = [
-          { id: 1, name: "NestNepal" },
-          { id: 2, name: "TechCorp" },
-          { id: 3, name: "DesignHub" },
-        ];
-        setCompanies(mockCompanies);
-      } catch (error) {
-        console.error("Failed to fetch companies:", error);
+        const token = Cookies.get("token");
+        const res = await fetch(`${API_URL}/users/admin/profiles/`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        setUsers(data.data || []);
+      } catch (err) {
+        console.error("Error fetching users:", err);
+        setUsers([]);
       }
-    };
-
-    fetchCompanies();
+    }
+    fetchUsers();
   }, []);
 
-  const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const companies = Array.isArray(users)
+    ? users.filter((u) => u.user?.role === "company")
+    : [];
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    // Auto-fill company name if employer is selected
+    if (name === "employer") {
+      const selectedCompany = companies.find((c) => c._id === value);
+      setForm((prev) => ({
+        ...prev,
+        employer: value,
+        company: selectedCompany?.user?.full_name || "",
+      }));
+    } else {
+      setForm((prev) => ({
+        ...prev,
+        [name]: name === "isActive" ? value === "true" : value,
+      }));
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Validate that a company is selected
-    if (!form.company) {
-      alert("Please select a company from the list");
-      return;
-    }
-
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    try {
+      const token = Cookies.get("token");
 
-    // Get current jobs from localStorage
-    const existing = JSON.parse(localStorage.getItem("jobs") || "[]");
-    const newJob = {
-      ...form,
-      id: Date.now(), // Unique id
-    };
+      const jobData = {
+        ...form,
+        salaryMin: Number(form.salaryMin),
+        salaryMax: Number(form.salaryMax),
+        requirements: form.requirements
+          .split(",")
+          .map((r) => r.trim())
+          .filter(Boolean),
+      };
 
-    // Save to localStorage
-    localStorage.setItem("jobs", JSON.stringify([...existing, newJob]));
+      const res = await fetch(`${API_URL}/jobs/admin/jobs`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(jobData),
+      });
 
-    setSuccess(true);
-    setIsSubmitting(false);
-
-    setTimeout(() => router.push("/admin/alljobs"), 1500);
+      const data = await res.json();
+      if (res.ok) {
+        setSuccess(true);
+        setTimeout(() => router.push("/admin/alljobs"), 1500);
+      } else {
+        alert(data.message || "Failed to create job");
+      }
+    } catch (error) {
+      console.error("Job create error:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="p-4 sm:p-6">
       <div className="mb-6">
         <button
-          onClick={() => router.push("/admin/alljobs")}
-          className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+          onClick={() => router.push("/admin/all-jobs")}
+          className="flex items-center text-gray-600 hover:text-gray-900"
         >
-          <ArrowLeft className="mr-2 h-5 w-5" />
-          Back to Jobs
+          <ArrowLeft className="mr-2 h-5 w-5" /> Back to Jobs
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-[#4640DE] to-[#6A64F1]">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+        <div className="px-6 py-4 border-b bg-gradient-to-r from-[#4640DE] to-[#6A64F1]">
           <h1 className="text-xl font-semibold text-white flex items-center">
-            <Plus className="mr-2 h-5 w-5" />
-            Add New Job
+            <Plus className="mr-2 h-5 w-5" /> Add New Job
           </h1>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          <div>
-            <label
-              htmlFor="title"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Job Title
-            </label>
-            <input
-              id="title"
-              name="title"
-              placeholder="Frontend Developer"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4640DE] focus:border-[#4640DE] transition-all"
-              value={form.title}
-              onChange={handleChange}
-              required
-            />
-          </div>
+          <input
+            name="title"
+            placeholder="Job Title"
+            value={form.title}
+            onChange={handleChange}
+            required
+            className="w-full border rounded px-4 py-2"
+          />
 
-          <div>
-            <label
-              htmlFor="company"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Company
-            </label>
-            <select
-              id="company"
-              name="company"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4640DE] focus:border-[#4640DE] transition-all"
-              value={form.company}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select a company</option>
-              {companies.map((company) => (
-                <option key={company.id} value={company.name}>
-                  {company.name}
-                </option>
-              ))}
-            </select>
-            <p className="text-xs text-gray-500 mt-1">
-              Only existing companies can be selected
-            </p>
-          </div>
+          {/* Company dropdown (sets employer + company name) */}
+          <select
+            name="employer"
+            value={form.employer}
+            onChange={handleChange}
+            required
+            className="w-full border rounded px-4 py-2"
+          >
+            <option value="">Select a company</option>
+            {companies.map((c) => (
+              <option key={c._id} value={c._id}>
+                {c.user.full_name} ({c.user.email})
+              </option>
+            ))}
+          </select>
 
-          <div>
-            <label
-              htmlFor="location"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Location
-            </label>
-            <input
-              id="location"
-              name="location"
-              placeholder="Kathmandu or Remote"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4640DE] focus:border-[#4640DE] transition-all"
-              value={form.location}
-              onChange={handleChange}
-              required
-            />
-          </div>
+          <input
+            name="location"
+            placeholder="Location"
+            value={form.location}
+            onChange={handleChange}
+            required
+            className="w-full border rounded px-4 py-2"
+          />
 
-          <div>
-            <label
-              htmlFor="type"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Job Type
-            </label>
-            <select
-              id="type"
-              name="type"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4640DE] focus:border-[#4640DE] transition-all"
-              value={form.type}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select Job Type</option>
-              <option value="Full-time">Full-time</option>
-              <option value="Part-time">Part-time</option>
-              <option value="Remote">Remote</option>
-            </select>
-          </div>
+          <select
+            name="type"
+            value={form.type}
+            onChange={handleChange}
+            required
+            className="w-full border rounded px-4 py-2"
+          >
+            <option value="">Select Job Type</option>
+            <option value="full-time">Full-time</option>
+            <option value="part-time">Part-time</option>
+            <option value="remote">Remote</option>
+          </select>
 
-          <div className="flex justify-end space-x-3 pt-4">
+          <input
+            name="salaryMin"
+            type="number"
+            placeholder="Minimum Salary"
+            value={form.salaryMin}
+            onChange={handleChange}
+            className="w-full border rounded px-4 py-2"
+          />
+
+          <input
+            name="salaryMax"
+            type="number"
+            placeholder="Maximum Salary"
+            value={form.salaryMax}
+            onChange={handleChange}
+            className="w-full border rounded px-4 py-2"
+          />
+
+          <input
+            name="currency"
+            placeholder="Currency (e.g., NPR)"
+            value={form.currency}
+            onChange={handleChange}
+            className="w-full border rounded px-4 py-2"
+          />
+
+          <textarea
+            name="description"
+            placeholder="Job Description"
+            value={form.description}
+            onChange={handleChange}
+            required
+            className="w-full border rounded px-4 py-2"
+          ></textarea>
+
+          <textarea
+            name="requirements"
+            placeholder="Comma-separated skills (e.g., HTML, CSS, JS)"
+            value={form.requirements}
+            onChange={handleChange}
+            className="w-full border rounded px-4 py-2"
+          ></textarea>
+
+          <select
+            name="isActive"
+            value={form.isActive ? "true" : "false"}
+            onChange={handleChange}
+            className="w-full border rounded px-4 py-2"
+          >
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+
+          <div className="flex justify-end gap-3">
             <button
               type="button"
               onClick={() => router.push("/admin/all-jobs")}
-              className="px-5 py-2.5 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              className="px-5 py-2 border rounded"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-5 py-2.5 bg-[#4640DE] hover:bg-[#3a35c7] text-white font-medium rounded-lg transition-colors disabled:opacity-70 flex items-center"
+              className="px-5 py-2 bg-[#4640DE] text-white rounded"
             >
-              {isSubmitting ? (
-                <>
-                  <svg
-                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  Creating...
-                </>
-              ) : (
-                <>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Job
-                </>
-              )}
+              {isSubmitting ? "Creating..." : "Create Job"}
             </button>
           </div>
 

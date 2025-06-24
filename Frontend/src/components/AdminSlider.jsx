@@ -1,4 +1,5 @@
 "use client";
+import Cookies from "js-cookie";
 import {
   LayoutDashboard,
   Users,
@@ -9,6 +10,7 @@ import {
   X,
   UserPlus2,
   Briefcase,
+  Users2Icon,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -21,10 +23,10 @@ export default function AdminNavigation({ closeSidebar }) {
   const pathname = usePathname();
 
   // Uncomment and use a cookies library if needed
-  // useEffect(() => {
-  //   setUserName(Cookies.get("full_name") || "");
-  //   setUserEmail(Cookies.get("email") || "");
-  // }, []);
+  useEffect(() => {
+    setUserName(Cookies.get("full_name") || "");
+    setUserEmail(Cookies.get("email") || "");
+  }, []);
 
   const navItems = [
     { label: "Dashboard", icon: LayoutDashboard, path: "/admin/dashboard" },
@@ -34,11 +36,11 @@ export default function AdminNavigation({ closeSidebar }) {
     { label: "Add User", icon: UserPlus2, path: "/admin/allusers/add" },
     { label: "Add Company", icon: Briefcase, path: "/admin/allcompany/add" },
     { label: "Add Job", icon: UserPlus2, path: "/admin/alljobs/add" },
+    { label: "Settings", icon: Settings, path: "/admin/setting" },
+    // { label: "Profile", icon: Users2Icon, path: "/admin/profile" },
+    { label: "Help Center", icon: HelpCircle, path: "/admin/help-center" },
   ];
-  const settingsItems = [
-    { label: "Settings", icon: Settings, path: "/admin/settings" },
-    { label: "Help Center", icon: HelpCircle, path: "/admin/help" },
-  ];
+  
 
   return (
     <>
