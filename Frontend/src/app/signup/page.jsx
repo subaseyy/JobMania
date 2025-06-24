@@ -27,7 +27,7 @@ export default function Signup() {
         email,
         password,
         role: activeTab,
-        ...(activeTab === "company" && { companyName: name }),
+        ...(activeTab === "company" && { companyName: full_name }),
       });
 
       // await sendOtp({ email });
@@ -43,7 +43,7 @@ export default function Signup() {
   const handleOtpVerified = async () => {
     if (pendingUserData) {
  
-      router.push("/dashboard");
+      router.push("/");
     }
   };
 

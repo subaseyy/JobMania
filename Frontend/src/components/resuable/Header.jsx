@@ -98,10 +98,10 @@ const Header = () => {
             </Link>
             {isAuthenticated && (
               <>
-                <Link href="/dashboard/dashboard-overview">
+                <Link href="/user/dashboard-overview">
                   <p
                     className={`font-epilogue font-[500] text-sm sm:text-base transition-colors ${
-                      isActive("/dashboard/*")
+                      isActive("/user/*")
                         ? "text-[#4640DE] border-b-4 border-[#4640DE] pb-3"
                         : "text-[#515B6F] hover:text-[#4640DE] pb-3"
                     }`}

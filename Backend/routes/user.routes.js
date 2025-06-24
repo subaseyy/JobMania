@@ -8,6 +8,7 @@ const {
   updateProfileById,
   deleteProfileById,
   createUserByAdmin,
+  updateUserById,
 } = require("../controller/users.controller");
 
 const { protect, authorize } = require("../middlewares/auth.middleware");
@@ -45,7 +46,7 @@ router.put(
 );
 
 router.delete("/admin/profile/:id", protect, authorize("admin"), deleteProfileById);
-router.add("/admin/profile/", protect, authorize("admin"), createUserByAdmin);
+router.post("/admin/profile/", protect, authorize("admin"), createUserByAdmin);
 router.put("/admin/user/:id", protect, authorize("admin"), updateUserById);
 
 module.exports = router;

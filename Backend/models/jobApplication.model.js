@@ -13,13 +13,14 @@ const jobApplicationSchema = new mongoose.Schema({
     required: true
   },
 
-  resume: {
-    type: String
+  profile: {  // NEW FIELD
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Profile',
+    required: true
   },
 
-  coverLetter: {
-    type: String
-  },
+  resume: String,
+  coverLetter: String,
 
   status: {
     type: String,
@@ -32,6 +33,5 @@ const jobApplicationSchema = new mongoose.Schema({
     default: Date.now
   }
 });
-
 
 module.exports = mongoose.model('JobApplication', jobApplicationSchema);

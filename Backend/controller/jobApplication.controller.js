@@ -1,0 +1,184 @@
+const JobApplication = require("../models/jobApplication.model");
+const Profile = require("../models/profile.model");
+
+
+
+exports.getAllApplications = async (req, res) => {
+  try {
+    const applications = await JobApplication.find()
+      .populate("job")
+      .populate({
+        path: "applicant",
+        select: "full_name email role"
+      })
+      .populate({
+        path: "profile",
+        model: "Profile"
+      });
+
+    return res.status(200).json({
+      status: 200,
+      message: "All applications fetched",
+      data: applications,
+    });
+  } catch (err) {
+    console.error("Error fetching applications:", err);
+    res.status(500).json({ status: 500, message: "Server error" });
+  }
+};
+
+// Get single application by ID (admin)
+exports.getApplicationById = async (req, res) => {
+  try {
+    const application = await JobApplication.findById(req.params.id).populate("user job");
+    if (!application) return res.status(404).json({ status: 404, message: "Application not found" });
+
+    res.status(200).json({ status: 200, message: "Application fetched", data: application });
+  } catch (err) {
+    console.error("Error fetching application:", err);
+    res.status(500).json({ status: 500, message: "Server error" });
+  }
+};
+
+// Update application by ID (admin)
+exports.updateApplicationById = async (req, res) => {
+  try {
+    const application = await JobApplication.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!application) return res.status(404).json({ status: 404, message: "Application not found" });
+
+    res.status(200).json({ status: 200, message: "Application updated", data: application });
+  } catch (err) {
+    console.error("Error updating application:", err);
+    res.status(500).json({ status: 500, message: "Server error" });
+  }
+};
+
+// Delete application by ID (admin)
+exports.deleteApplicationById = async (req, res) => {
+  try {
+    const application = await JobApplication.findByIdAndDelete(req.params.id);
+    if (!application) return res.status(404).json({ status: 404, message: "Application not found" });
+
+    res.status(200).json({ status: 200, message: "Application deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting application:", err);
+    res.status(500).json({ status: 500, message: "Server error" });
+  }
+};
+
+
+
+exports.applyToJob = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { jobId, resumeUrl, coverLetter } = req.body;
+
+    if (!jobId) {
+      return res.status(400).json({ status: 400, message: "Job ID is required" });
+    }
+
+    const existing = await JobApplication.findOne({ applicant: userId, job: jobId });
+    if (existing) {
+      return res.status(409).json({ status: 409, message: "You already applied for this job" });
+    }
+
+    // 🔍 Get applicant's profile
+    const profile = await Profile.findOne({ user: userId });
+    if (!profile) {
+      return res.status(404).json({ status: 404, message: "User profile not found" });
+    }
+
+    const application = new JobApplication({
+      applicant: userId,
+      job: jobId,
+      profile: profile._id, // ✅ Attach profile
+      resume: resumeUrl,
+      coverLetter,
+      status: "applied"
+    });
+
+    await application.save();
+
+    return res.status(201).json({
+      status: 201,
+      message: "Application submitted successfully",
+      data: application,
+    });
+  } catch (err) {
+    console.error("Error submitting job application:", err);
+    res.status(500).json({ status: 500, message: "Server error" });
+  }
+};
+
+
+exports.getMyApplications = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const applications = await JobApplication.find({ user: userId }).populate("job");
+
+    return res.status(200).json({
+      status: 200,
+      message: "Your applications fetched",
+      data: applications,
+    });
+  } catch (err) {
+    console.error("Error fetching user applications:", err);
+    res.status(500).json({ status: 500, message: "Server error" });
+  }
+};
+
+
+exports.updateApplicationStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const validStatuses = ['applied', 'shortlisted', 'interview', 'rejected', 'hired'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        status: 400,
+        message: "Invalid status value",
+      });
+    }
+
+    const application = await JobApplication.findById(id).populate("job");
+    if (!application) {
+      return res.status(404).json({
+        status: 404,
+        message: "Application not found",
+      });
+    }
+
+    const job = await JobPost.findById(application.job._id);
+    if (!job) {
+      return res.status(404).json({
+        status: 404,
+        message: "Associated job post not found",
+      });
+    }
+
+    // If recruiter, make sure they own the job
+    if (req.user.role === "recruiter" && job.employer.toString() !== req.user.id) {
+      return res.status(403).json({
+        status: 403,
+        message: "You are not authorized to update this application",
+      });
+    }
+
+    application.status = status;
+    await application.save();
+
+    return res.status(200).json({
+      status: 200,
+      message: "Application status updated successfully",
+      data: application,
+    });
+  } catch (err) {
+    console.error("Error updating application status:", err);
+    return res.status(500).json({
+      status: 500,
+      message: "Server error while updating status",
+    });
+  }
+};
+
