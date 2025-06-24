@@ -85,17 +85,7 @@ const Header = () => {
                 Find Jobs
               </p>
             </Link>
-            <Link href="/find-companies">
-              <p
-                className={`font-epilogue font-[500] text-sm sm:text-base transition-colors ${
-                  isActive("/find-companies")
-                    ? "text-[#4640DE] border-b-4 border-[#4640DE] pb-3"
-                    : "text-[#515B6F] hover:text-[#4640DE] pb-3"
-                }`}
-              >
-                Browse Companies
-              </p>
-            </Link>
+            
             {isAuthenticated && (
   <>
     <Link

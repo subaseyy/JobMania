@@ -4,7 +4,7 @@ import HeroSection from "./component/HeroSection";
 import JobList from "./component/JobList";
 import { FilterSection } from "./component/FilterSection";
 import { MobileFilterButton } from "./component/MobileFilterButton";
-import { companiesData } from "../find-companies/utils/constants";
+
 import { useSearchParams } from "next/navigation";
 
 export default function JobBoard() {
