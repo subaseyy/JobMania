@@ -1,8 +1,8 @@
 const JobApplication = require("../models/jobApplication.model");
 const Profile = require("../models/profile.model");
+const JobPost = require("../models/jobPost.model"); // You need this for updateApplicationStatus
 
-
-
+// Get all applications (admin)
 exports.getAllApplications = async (req, res) => {
   try {
     const applications = await JobApplication.find()
@@ -30,7 +30,16 @@ exports.getAllApplications = async (req, res) => {
 // Get single application by ID (admin)
 exports.getApplicationById = async (req, res) => {
   try {
-    const application = await JobApplication.findById(req.params.id).populate("user job");
+    const application = await JobApplication.findById(req.params.id)
+      .populate("job")
+      .populate({
+        path: "applicant",
+        select: "full_name email role"
+      })
+      .populate({
+        path: "profile",
+        model: "Profile"
+      });
     if (!application) return res.status(404).json({ status: 404, message: "Application not found" });
 
     res.status(200).json({ status: 200, message: "Application fetched", data: application });
@@ -66,8 +75,7 @@ exports.deleteApplicationById = async (req, res) => {
   }
 };
 
-
-
+// Apply to job (user)
 exports.applyToJob = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -77,12 +85,13 @@ exports.applyToJob = async (req, res) => {
       return res.status(400).json({ status: 400, message: "Job ID is required" });
     }
 
+    // Prevent duplicate applications
     const existing = await JobApplication.findOne({ applicant: userId, job: jobId });
     if (existing) {
       return res.status(409).json({ status: 409, message: "You already applied for this job" });
     }
 
-    // 🔍 Get applicant's profile
+    // Get applicant's profile
     const profile = await Profile.findOne({ user: userId });
     if (!profile) {
       return res.status(404).json({ status: 404, message: "User profile not found" });
@@ -91,7 +100,7 @@ exports.applyToJob = async (req, res) => {
     const application = new JobApplication({
       applicant: userId,
       job: jobId,
-      profile: profile._id, // ✅ Attach profile
+      profile: profile._id,
       resume: resumeUrl,
       coverLetter,
       status: "applied"
@@ -110,11 +119,11 @@ exports.applyToJob = async (req, res) => {
   }
 };
 
-
+// Get all applications by logged-in user (user)
 exports.getMyApplications = async (req, res) => {
   try {
     const userId = req.user.id;
-    const applications = await JobApplication.find({ user: userId }).populate("job");
+    const applications = await JobApplication.find({ applicant: userId }).populate("job");
 
     return res.status(200).json({
       status: 200,
@@ -127,7 +136,7 @@ exports.getMyApplications = async (req, res) => {
   }
 };
 
-
+// PATCH application status (admin/recruiter)
 exports.updateApplicationStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -157,7 +166,7 @@ exports.updateApplicationStatus = async (req, res) => {
       });
     }
 
-    // If recruiter, make sure they own the job
+    // If recruiter, check job ownership
     if (req.user.role === "recruiter" && job.employer.toString() !== req.user.id) {
       return res.status(403).json({
         status: 403,
@@ -182,3 +191,22 @@ exports.updateApplicationStatus = async (req, res) => {
   }
 };
 
+exports.checkIfApplied = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const jobId = req.params.jobId;
+
+    const application = await JobApplication.findOne({
+      applicant: userId,
+      job: jobId,
+      status: "applied"
+    });
+
+    res.status(200).json({
+      applied: !!application
+    });
+  } catch (err) {
+    console.error("Error checking applied status:", err);
+    res.status(500).json({ applied: false, error: "Server error" });
+  }
+};

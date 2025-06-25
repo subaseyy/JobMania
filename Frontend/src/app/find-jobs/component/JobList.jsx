@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import JobCard from "./JobCard";
 import Pagination from "./Pagination";
 
@@ -15,21 +15,60 @@ export default function JobList({
   setCategories,
   setJobLevels,
   setSalaryRanges,
+  getCompanyByJobId,
 }) {
   const [viewMode, setViewMode] = useState("list");
+  const [appliedStatus, setAppliedStatus] = useState({}); // { [jobId]: true/false }
+
   const jobsPerPage = viewMode === "list" ? 5 : 6;
   const sortedJobs = [...filteredJobs].sort((a, b) => {
-    if (sortOption === "Newest") {
-      return b.id - a.id;
-    } else {
-      return b.applicants - a.applicants;
-    }
+    if (sortOption === "Newest") return b.id - a.id;
+    else return b.applicants - a.applicants;
   });
 
   const indexOfLastJob = currentPage * jobsPerPage;
   const indexOfFirstJob = indexOfLastJob - jobsPerPage;
   const currentJobs = sortedJobs.slice(indexOfFirstJob, indexOfLastJob);
   const totalPages = Math.ceil(sortedJobs.length / jobsPerPage);
+
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(";").shift();
+  }
+
+  // --- Fetch applied status for visible jobs ---
+  useEffect(() => {
+    async function fetchAppliedStatus() {
+      if (!currentJobs.length) return;
+      const statusObj = {};
+      const token = getCookie("token");
+
+      await Promise.all(
+        currentJobs.map(async (job) => {
+          try {
+            const res = await fetch(
+              `http://localhost:5050/api/jobApplications/${job._id}/check-applied`,
+              {
+                method: "GET",
+                credentials: "include", // For cookies
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+            const data = await res.json();
+            statusObj[job._id] = data.applied;
+          } catch {
+            statusObj[job._id] = false;
+          }
+        })
+      );
+      setAppliedStatus(statusObj);
+    }
+    fetchAppliedStatus();
+  }, [currentJobs]);
 
   return (
     <div className="col-span-3 flex flex-col min-h-[80vh]">
@@ -102,9 +141,16 @@ export default function JobList({
             : "space-y-4"
         }`}
       >
+        {console.log(appliedStatus)}
         {currentJobs.length > 0 ? (
-          currentJobs.map((job) => (
-            <JobCard key={job.id} job={job} viewMode={viewMode} />
+          currentJobs.map((job, index) => (
+            <JobCard
+              key={index}
+              job={job}
+              viewMode={viewMode}
+              getCompanyByJobId={getCompanyByJobId}
+              applied={appliedStatus[job._id]}
+            />
           ))
         ) : (
           <div className="text-center py-10 col-span-2">
@@ -128,7 +174,7 @@ export default function JobList({
         )}
       </div>
 
-      {/* Pagination Below Job Cards */}
+      {/* Pagination */}
       {filteredJobs.length > jobsPerPage && (
         <div className="mt-6">
           <Pagination
