@@ -2,6 +2,7 @@
   import { useState, useEffect, useMemo } from "react";
   import Cookies from "js-cookie";
 
+
   export default function CompanyApplicationsPage() {
     const [applications, setApplications] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -9,6 +10,7 @@
     const [search, setSearch] = useState("");
 
     const API_URL = "http://localhost:5050/api";
+    const NEXT_PUBLIC_BASE_URL = "http://localhost:5050"
     const token = Cookies.get("token");
 
     useEffect(() => {
@@ -16,7 +18,7 @@
         setLoading(true);
         setError("");
         try {
-          const res = await fetch(`${API_URL}/company/jobApplications`, {
+          const res = await fetch(`${API_URL}/jobApplications/company/applications`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           const data = await res.json();
@@ -109,7 +111,7 @@
                     <td className="px-4 py-2">
                       {app.resume && app.resume !== "no_resume" ? (
                         <a
-                          href={app.resume}
+                          href={`${NEXT_PUBLIC_BASE_URL}${app.resume}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-blue-600 underline"
