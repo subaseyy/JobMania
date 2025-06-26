@@ -4,7 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import ApplyPopup from "./ApplyPopup";
 
-export default function JobCard({ job, viewMode, getCompanyByJobId, applied }) {
+export default function JobCard({
+  job,
+  viewMode,
+  getCompanyByJobId,
+  applied,
+  refreshAppliedStatusForJob,
+}) {
   const [showApplyPopup, setShowApplyPopup] = useState(false);
 
   const company = getCompanyByJobId?.(job._id) || {
@@ -13,8 +19,12 @@ export default function JobCard({ job, viewMode, getCompanyByJobId, applied }) {
     location: job.location,
   };
 
-  const applyJob = () => setShowApplyPopup(true);
-  const closePopup = () => setShowApplyPopup(false);
+  const handleApplySuccess = () => {
+    setShowApplyPopup(false);
+    if (refreshAppliedStatusForJob) {
+      refreshAppliedStatusForJob(job._id);
+    }
+  };
 
   const progressPercentage = job.capacity
     ? Math.min(100, Math.round((job.applicants / job.capacity) * 100))
@@ -95,7 +105,7 @@ export default function JobCard({ job, viewMode, getCompanyByJobId, applied }) {
           <button 
             onClick={(e) => {
               e.stopPropagation();
-              applyJob();
+              setShowApplyPopup(true);
             }}
             className="bg-[#4640DE] text-white font-medium w-full py-2 rounded-sm hover:bg-[#3932b8] transition-colors duration-300 ease-in-out cursor-pointer"
           >
@@ -104,7 +114,12 @@ export default function JobCard({ job, viewMode, getCompanyByJobId, applied }) {
         )}
       </div>
       {showApplyPopup && (
-        <ApplyPopup job={job} company={company} onClose={closePopup} />
+        <ApplyPopup
+          job={job}
+          company={company}
+          onClose={() => setShowApplyPopup(false)}
+          onSuccess={handleApplySuccess}
+        />
       )}
     </div>
   );

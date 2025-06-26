@@ -1,4 +1,5 @@
 const express = require("express");
+const multer = require("multer");
 const router = express.Router();
 const {
   getAllApplications,
@@ -8,9 +9,11 @@ const {
   getMyApplications,
   applyToJob,
   updateApplicationStatus,
-  checkIfApplied, // <<-- NEW
+  checkIfApplied,
+  getApplicationsForCompany, // <<-- NEW
 } = require("../controller/jobApplication.controller");
 const { protect, authorize } = require("../middlewares/auth.middleware");
+const upload = multer({ dest: "uploads/resumes/" });
 
 // Admin
 router.get(
@@ -37,9 +40,14 @@ router.delete(
   authorize("admin"),
   deleteApplicationById
 );
-
+router.get(
+  "/company/applications",
+  protect,
+  authorize("company", "admin"),
+  getApplicationsForCompany
+);
 // User
-router.post("/apply", protect, applyToJob);
+router.post("/apply", protect, upload.single("resume"), applyToJob);
 router.get("/my-applications", protect, getMyApplications);
 
 // Admin/Recruiter

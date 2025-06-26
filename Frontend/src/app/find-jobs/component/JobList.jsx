@@ -21,6 +21,7 @@ export default function JobList({
   const [appliedStatus, setAppliedStatus] = useState({}); // { [jobId]: true/false }
 
   const jobsPerPage = viewMode === "list" ? 5 : 6;
+
   const sortedJobs = [...filteredJobs].sort((a, b) => {
     if (sortOption === "Newest") return b.id - a.id;
     else return b.applicants - a.applicants;
@@ -37,21 +38,25 @@ export default function JobList({
     if (parts.length === 2) return parts.pop().split(";").shift();
   }
 
- // --- Fetch applied status for visible jobs ---
+  // Only fetch status for jobs on the current page that don't have status yet
   useEffect(() => {
     async function fetchAppliedStatus() {
-      if (!currentJobs.length) return;
-      const statusObj = {};
+      const jobsToCheck = currentJobs.filter(
+        (job) => appliedStatus[job._id] === undefined
+      );
+      if (jobsToCheck.length === 0) return;
+
       const token = getCookie("token");
+      const statusUpdates = {};
 
       await Promise.all(
-        currentJobs.map(async (job) => {
+        jobsToCheck.map(async (job) => {
           try {
             const res = await fetch(
               `http://localhost:5050/api/jobApplications/${job._id}/check-applied`,
               {
                 method: "GET",
-                credentials: "include", // For cookies
+                credentials: "include",
                 headers: {
                   "Content-Type": "application/json",
                   Authorization: `Bearer ${token}`,
@@ -59,17 +64,40 @@ export default function JobList({
               }
             );
             const data = await res.json();
-            statusObj[job._id] = data.applied;
+            statusUpdates[job._id] = data.applied;
           } catch {
-            statusObj[job._id] = false;
+            statusUpdates[job._id] = false;
           }
         })
       );
-      setAppliedStatus(statusObj);
+      setAppliedStatus((prev) => ({ ...prev, ...statusUpdates }));
     }
     fetchAppliedStatus();
-    
+    // Only runs when currentJobs changes
+    // eslint-disable-next-line
   }, [currentJobs]);
+
+  // Refresh a specific job’s applied status (after applying)
+  async function refreshAppliedStatusForJob(jobId) {
+    const token = getCookie("token");
+    try {
+      const res = await fetch(
+        `http://localhost:5050/api/jobApplications/${jobId}/check-applied`,
+        {
+          method: "GET",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const data = await res.json();
+      setAppliedStatus((prev) => ({ ...prev, [jobId]: data.applied }));
+    } catch {
+      setAppliedStatus((prev) => ({ ...prev, [jobId]: false }));
+    }
+  }
 
   return (
     <div className="col-span-3 flex flex-col min-h-[80vh]">
@@ -142,15 +170,15 @@ export default function JobList({
             : "space-y-4"
         }`}
       >
-        {console.log(appliedStatus)}
         {currentJobs.length > 0 ? (
           currentJobs.map((job, index) => (
             <JobCard
-              key={index}
+              key={job._id || index}
               job={job}
               viewMode={viewMode}
               getCompanyByJobId={getCompanyByJobId}
               applied={appliedStatus[job._id]}
+              refreshAppliedStatusForJob={refreshAppliedStatusForJob}
             />
           ))
         ) : (

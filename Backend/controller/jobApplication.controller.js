@@ -9,11 +9,11 @@ exports.getAllApplications = async (req, res) => {
       .populate("job")
       .populate({
         path: "applicant",
-        select: "full_name email role"
+        select: "full_name email role",
       })
       .populate({
         path: "profile",
-        model: "Profile"
+        model: "Profile",
       });
 
     return res.status(200).json({
@@ -34,15 +34,20 @@ exports.getApplicationById = async (req, res) => {
       .populate("job")
       .populate({
         path: "applicant",
-        select: "full_name email role"
+        select: "full_name email role",
       })
       .populate({
         path: "profile",
-        model: "Profile"
+        model: "Profile",
       });
-    if (!application) return res.status(404).json({ status: 404, message: "Application not found" });
+    if (!application)
+      return res
+        .status(404)
+        .json({ status: 404, message: "Application not found" });
 
-    res.status(200).json({ status: 200, message: "Application fetched", data: application });
+    res
+      .status(200)
+      .json({ status: 200, message: "Application fetched", data: application });
   } catch (err) {
     console.error("Error fetching application:", err);
     res.status(500).json({ status: 500, message: "Server error" });
@@ -52,10 +57,19 @@ exports.getApplicationById = async (req, res) => {
 // Update application by ID (admin)
 exports.updateApplicationById = async (req, res) => {
   try {
-    const application = await JobApplication.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!application) return res.status(404).json({ status: 404, message: "Application not found" });
+    const application = await JobApplication.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+    if (!application)
+      return res
+        .status(404)
+        .json({ status: 404, message: "Application not found" });
 
-    res.status(200).json({ status: 200, message: "Application updated", data: application });
+    res
+      .status(200)
+      .json({ status: 200, message: "Application updated", data: application });
   } catch (err) {
     console.error("Error updating application:", err);
     res.status(500).json({ status: 500, message: "Server error" });
@@ -66,9 +80,14 @@ exports.updateApplicationById = async (req, res) => {
 exports.deleteApplicationById = async (req, res) => {
   try {
     const application = await JobApplication.findByIdAndDelete(req.params.id);
-    if (!application) return res.status(404).json({ status: 404, message: "Application not found" });
+    if (!application)
+      return res
+        .status(404)
+        .json({ status: 404, message: "Application not found" });
 
-    res.status(200).json({ status: 200, message: "Application deleted successfully" });
+    res
+      .status(200)
+      .json({ status: 200, message: "Application deleted successfully" });
   } catch (err) {
     console.error("Error deleting application:", err);
     res.status(500).json({ status: 500, message: "Server error" });
@@ -79,22 +98,19 @@ exports.deleteApplicationById = async (req, res) => {
 exports.applyToJob = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { jobId, resumeUrl, coverLetter } = req.body;
+    const { jobId, coverLetter } = req.body;
 
-    if (!jobId) {
-      return res.status(400).json({ status: 400, message: "Job ID is required" });
-    }
+    // If file was uploaded, store path
+    const resumeUrl = req.file
+      ? `/uploads/resumes/${req.file.filename}`
+      : "no_resume";
 
-    // Prevent duplicate applications
-    const existing = await JobApplication.findOne({ applicant: userId, job: jobId });
-    if (existing) {
-      return res.status(409).json({ status: 409, message: "You already applied for this job" });
-    }
-
-    // Get applicant's profile
+    // ... rest same as before ...
     const profile = await Profile.findOne({ user: userId });
     if (!profile) {
-      return res.status(404).json({ status: 404, message: "User profile not found" });
+      return res
+        .status(404)
+        .json({ status: 404, message: "User profile not found" });
     }
 
     const application = new JobApplication({
@@ -103,7 +119,7 @@ exports.applyToJob = async (req, res) => {
       profile: profile._id,
       resume: resumeUrl,
       coverLetter,
-      status: "applied"
+      status: "applied",
     });
 
     await application.save();
@@ -123,7 +139,9 @@ exports.applyToJob = async (req, res) => {
 exports.getMyApplications = async (req, res) => {
   try {
     const userId = req.user.id;
-    const applications = await JobApplication.find({ applicant: userId }).populate("job");
+    const applications = await JobApplication.find({
+      applicant: userId,
+    }).populate("job");
 
     return res.status(200).json({
       status: 200,
@@ -142,7 +160,13 @@ exports.updateApplicationStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
-    const validStatuses = ['applied', 'shortlisted', 'interview', 'rejected', 'hired'];
+    const validStatuses = [
+      "applied",
+      "shortlisted",
+      "interview",
+      "rejected",
+      "hired",
+    ];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({
         status: 400,
@@ -167,7 +191,10 @@ exports.updateApplicationStatus = async (req, res) => {
     }
 
     // If recruiter, check job ownership
-    if (req.user.role === "recruiter" && job.employer.toString() !== req.user.id) {
+    if (
+      req.user.role === "recruiter" &&
+      job.employer.toString() !== req.user.id
+    ) {
       return res.status(403).json({
         status: 403,
         message: "You are not authorized to update this application",
@@ -199,14 +226,48 @@ exports.checkIfApplied = async (req, res) => {
     const application = await JobApplication.findOne({
       applicant: userId,
       job: jobId,
-      status: "applied"
+      status: "applied",
     });
 
     res.status(200).json({
-      applied: !!application
+      applied: !!application,
     });
   } catch (err) {
     console.error("Error checking applied status:", err);
     res.status(500).json({ applied: false, error: "Server error" });
+  }
+};
+// Get all applications for jobs owned by this company
+exports.getApplicationsForCompany = async (req, res) => {
+  try {
+    // Only for company or admin
+    if (!["company", "admin"].includes(req.user.role)) {
+      return res.status(403).json({ status: 403, message: "Forbidden" });
+    }
+
+    // Find all jobs owned by this company
+    const jobs = await JobPost.find({ employer: req.user.id });
+    const jobIds = jobs.map((j) => j._id);
+
+    // Find all applications for these jobs
+    const applications = await JobApplication.find({ job: { $in: jobIds } })
+      .populate("job")
+      .populate({
+        path: "applicant",
+        select: "full_name email role",
+      })
+      .populate({
+        path: "profile",
+        model: "Profile",
+      });
+
+    return res.status(200).json({
+      status: 200,
+      message: "Applications for company jobs fetched",
+      data: applications,
+    });
+  } catch (err) {
+    console.error("Error fetching company applications:", err);
+    res.status(500).json({ status: 500, message: "Server error" });
   }
 };

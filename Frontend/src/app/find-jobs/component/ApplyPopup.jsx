@@ -5,7 +5,7 @@ import Image from "next/image";
 import Cookies from "js-cookie";
 import { submitJobApplication } from "@/lib/api/Auth";
 
-export default function ApplyPopup({ job, company, onClose }) {
+export default function ApplyPopup({ job, company, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -24,7 +24,7 @@ export default function ApplyPopup({ job, company, onClose }) {
     const handleClickOutside = (event) => {
       if (popupRef.current && !popupRef.current.contains(event.target)) {
         // console.log("Application data when closed by outside click:", {
-        //   jobId: job.id,
+        //   jobId: job._id,
         //   jobTitle: job.title,
         //   ...formData,
         //   resume: resume ? resume.name : null,
@@ -40,7 +40,7 @@ export default function ApplyPopup({ job, company, onClose }) {
       document.body.style.overflow = "auto";
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [formData, resume, job.id, job.title, onClose]);
+  }, [formData, resume, job._id, job.title, onClose]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -51,22 +51,47 @@ export default function ApplyPopup({ job, company, onClose }) {
     setResume(e.target.files[0]);
   };
 
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   setIsSubmitting(true);
+
+  //   const data = new FormData();
+  //   data.append("jobId", job._id);
+  //   data.append("coverLetter", formData.additionalInfo);
+  //   if (resume) data.append("resume", resume);
+
+  //   try {
+  //     const response = await fetch(`${API_BASE}/jobApplications/apply`, {
+  //       method: "POST",
+  //       headers: {
+  //         Authorization: `Bearer ${Cookies.get("token")}`,
+  //       },
+  //       body: data,
+  //     });
+
+  //     if (!response.ok) throw new Error("Application failed");
+  //     const result = await response.json();
+  //     alert("Application submitted successfully!");
+  //     if (onSuccess) onSuccess();
+  //     onClose();
+  //   } catch (error) {
+  //     alert(error.message || "An error occurred. Please try again.");
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      console.log("Submitting application with job ID:", job.id);
-      console.log("Cover letter:", formData);
-      console.log("Access token:", Cookies.get("access_token"));
-
-      const result = await submitJobApplication(job.id, formData);
-
-      console.log("Application submitted:", result);
+      // Pass job._id and all the data (including resume)
+      await submitJobApplication(job._id, { ...formData, resume });
       alert("Application submitted successfully!");
+      if (onSuccess) onSuccess();
       onClose();
     } catch (error) {
-      console.error("Error submitting application:", error);
       alert(error.message || "An error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);

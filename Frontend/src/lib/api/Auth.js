@@ -172,18 +172,21 @@ export async function updateProfile(profileData) {
 // api/auth.js
 
 export async function submitJobApplication(jobId, formData) {
+  const data = new FormData();
+  data.append("jobId", jobId);
+  data.append("coverLetter", formData.additionalInfo);
+  if (formData.resume) {
+    data.append("resume", formData.resume);
+  }
+
   const response = await fetch(`${API_BASE}/jobApplications/apply`, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
       Authorization: `Bearer ${Cookies.get("token")}`,
     },
-    body: JSON.stringify({
-      jobId,
-      resumeUrl: formData.resume, // Adjust as needed
-      coverLetter: formData.additionalInfo, // Adjust as needed
-    }),
+    body: data,
   });
+
   if (!response.ok) throw new Error("Application failed");
   return await response.json();
 }
@@ -213,6 +216,7 @@ export async function updateEmailWithOtp(email) {
     throw error;
   }
 }
+
 
 export async function changePassword(oldPassword, newPassword) {
   try {
