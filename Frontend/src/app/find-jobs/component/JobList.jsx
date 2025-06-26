@@ -37,7 +37,7 @@ export default function JobList({
     if (parts.length === 2) return parts.pop().split(";").shift();
   }
 
-  // --- Fetch applied status for visible jobs ---
+ // --- Fetch applied status for visible jobs ---
   useEffect(() => {
     async function fetchAppliedStatus() {
       if (!currentJobs.length) return;
@@ -68,6 +68,7 @@ export default function JobList({
       setAppliedStatus(statusObj);
     }
     fetchAppliedStatus();
+    
   }, [currentJobs]);
 
   return (
