@@ -13,6 +13,7 @@ import {
   Menu,
   X,
   LogOut,
+  ClipboardList,
 } from "lucide-react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -42,20 +43,19 @@ export default function Layout({ children }) {
     "dashboard-overview": "Dashboard",
     messages: "Messages",
     application: "Applications",
-    job: "Find Jobs",
-    companies: "Browse Companies",
-    profile: "My Public Profile",
-    setting: "Settings",
+    "my-jobs": "My Jobs",
     "help-center": "Help Center",
-    "job-description": "Job Description",
-    "company-description": "Company Description",
+    "add-jobs": "Add Job",
+    "add-applied": "Add Applied",
   };
 
   const pageTitle = titleMap[currentSlug] || currentSlug;
 
   const navItems = [
     { label: "Dashboard", icon: Home, path: "/company/dashboard" },
-
+    { label: "My Jobs", icon: ClipboardList, path: "/company/my-jobs" },
+    { label: "Add Job", icon: ClipboardList, path: "/company/add-jobs" },
+    { label: "Job Applied", icon: ClipboardList, path: "/company/job-applied" },
   ];
 
   const settingsItems = [
@@ -102,7 +102,10 @@ export default function Layout({ children }) {
       >
         <div className="p-6 border-b border-purple-100 flex justify-between items-center my-4">
           <Image src="/logo.png" alt="Logo" width={216} height={40} />
-          <button className="md:hidden text-gray-700" onClick={() => setSidebarOpen(false)}>
+          <button
+            className="md:hidden text-gray-700"
+            onClick={() => setSidebarOpen(false)}
+          >
             <X size={24} />
           </button>
         </div>
@@ -189,9 +192,12 @@ export default function Layout({ children }) {
       </div>
 
       <div className="md:ml-64">
-        <header className="bg-white p-4 md:p-6 border-b flex justify-between items-center sticky top-0 z-10">
+        {/* <header className="bg-white p-4 md:p-6 border-b flex justify-between items-center sticky top-0 z-10">
           <div className="flex items-center gap-4">
-            <button className="md:hidden text-gray-700" onClick={() => setSidebarOpen(true)}>
+            <button
+              className="md:hidden text-gray-700"
+              onClick={() => setSidebarOpen(true)}
+            >
               <Menu size={24} />
             </button>
             <h1 className="font-clash font-semibold text-2xl md:text-[32px] text-[#25324B] capitalize">
@@ -210,13 +216,13 @@ export default function Layout({ children }) {
               <p className="block sm:hidden text-sm">Home</p>
               <p className="hidden sm:block text-base">Back to homepage</p>
             </button>
-            <div className="p-2 text-[#25324B] hover:bg-gray-100 rounded-full">
-
-            </div>
+            <div className="p-2 text-[#25324B] hover:bg-gray-100 rounded-full"></div>
           </div>
-        </header>
+        </header> */}
 
-        <main className="h-[calc(100vh-80px)] overflow-y-auto bg-white">{children}</main>
+        <main className="h-[calc(100vh-80px)] overflow-y-auto bg-white">
+          {children}
+        </main>
       </div>
     </div>
   );

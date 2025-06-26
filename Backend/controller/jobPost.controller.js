@@ -1,11 +1,16 @@
 const Job = require("../models/jobPost.model");
 
-
 // Get all jobs (admin)
 exports.getAllJobs = async (req, res) => {
   try {
-    const jobs = await Job.find();
-    return res.status(200).json({ status: 200, message: "All jobs fetched", data: jobs });
+    let filter = {};
+    if (req.user.role === "company") {
+      filter.employer = req.user.id;
+    }
+    const jobs = await Job.find(filter);
+    return res
+      .status(200)
+      .json({ status: 200, message: "All jobs fetched", data: jobs });
   } catch (err) {
     console.error("Error fetching jobs:", err);
     res.status(500).json({ status: 500, message: "Server error" });
@@ -16,7 +21,8 @@ exports.getAllJobs = async (req, res) => {
 exports.getJobById = async (req, res) => {
   try {
     const job = await Job.findById(req.params.id);
-    if (!job) return res.status(404).json({ status: 404, message: "Job not found" });
+    if (!job)
+      return res.status(404).json({ status: 404, message: "Job not found" });
 
     res.status(200).json({ status: 200, message: "Job fetched", data: job });
   } catch (err) {
@@ -25,34 +31,53 @@ exports.getJobById = async (req, res) => {
   }
 };
 
-// Update job by ID (admin)
 exports.updateJobById = async (req, res) => {
   try {
-    const job = await Job.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!job) return res.status(404).json({ status: 404, message: "Job not found" });
+    const job = await Job.findById(req.params.id);
+    if (!job)
+      return res.status(404).json({ status: 404, message: "Job not found" });
 
-    res.status(200).json({ status: 200, message: "Job updated", data: job });
+    // Only allow if admin, or if company and owns the job
+    if (
+      req.user.role !== "admin" &&
+      !(req.user.role === "company" && job.employer.toString() === req.user.id)
+    ) {
+      return res.status(403).json({ status: 403, message: "Forbidden" });
+    }
+
+    const updated = await Job.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
+    res
+      .status(200)
+      .json({ status: 200, message: "Job updated", data: updated });
   } catch (err) {
-    console.error("Error updating job:", err);
     res.status(500).json({ status: 500, message: "Server error" });
   }
 };
 
-// Delete job by ID (admin)
 exports.deleteJobById = async (req, res) => {
   try {
-    const job = await Job.findByIdAndDelete(req.params.id);
-    if (!job) return res.status(404).json({ status: 404, message: "Job not found" });
+    const job = await Job.findById(req.params.id);
+    if (!job)
+      return res.status(404).json({ status: 404, message: "Job not found" });
 
-    res.status(200).json({ status: 200, message: "Job deleted successfully" });
+    // Only allow if admin, or if company and owns the job
+    if (
+      req.user.role !== "admin" &&
+      !(req.user.role === "company" && job.employer.toString() === req.user.id)
+    ) {
+      return res.status(403).json({ status: 403, message: "Forbidden" });
+    }
+
+    await Job.findByIdAndDelete(req.params.id);
+    res.status(200).json({ status: 200, message: "Job deleted" });
   } catch (err) {
-    console.error("Error deleting job:", err);
     res.status(500).json({ status: 500, message: "Server error" });
   }
 };
 
 exports.createJobByAdmin = async (req, res) => {
-
   try {
     const {
       title,
@@ -98,7 +123,6 @@ exports.createJobByAdmin = async (req, res) => {
   }
 };
 
-
 exports.updateJobStatus = async (req, res) => {
   const { id } = req.params;
   const { isActive } = req.body;
@@ -115,7 +139,7 @@ exports.updateJobStatus = async (req, res) => {
 // Get all active jobs (for users)
 exports.getPublicJobs = async (req, res) => {
   try {
-    const jobs = await Job.find({ isActive : true });
+    const jobs = await Job.find({ isActive: true });
     return res.status(200).json({
       status: 200,
       message: "Available jobs fetched successfully",
@@ -132,7 +156,9 @@ exports.getJobDetails = async (req, res) => {
   try {
     const job = await Job.findById(req.params.id);
     if (!job || !job.isActive) {
-      return res.status(404).json({ status: 404, message: "Job not available" });
+      return res
+        .status(404)
+        .json({ status: 404, message: "Job not available" });
     }
 
     return res.status(200).json({
@@ -146,8 +172,6 @@ exports.getJobDetails = async (req, res) => {
   }
 };
 
-
-
 exports.createJobPost = async (req, res) => {
   try {
     const {
@@ -159,18 +183,18 @@ exports.createJobPost = async (req, res) => {
       salaryMin,
       salaryMax,
       currency,
-      requirements
+      requirements,
     } = req.body;
 
     if (!title || !company || !description || !location || !type) {
       return res.status(400).json({
         status: 400,
-        message: "Title, company, description, location, and type are required"
+        message: "Title, company, description, location, and type are required",
       });
     }
 
     const job = new Job({
-      employer: req.user.id,  // ✅ Link job to company account
+      employer: req.user.id, // ✅ Link job to company account
       title,
       company,
       description,
@@ -179,7 +203,7 @@ exports.createJobPost = async (req, res) => {
       salaryMin,
       salaryMax,
       currency,
-      requirements
+      requirements,
     });
 
     await job.save();
@@ -187,7 +211,7 @@ exports.createJobPost = async (req, res) => {
     return res.status(201).json({
       status: 201,
       message: "Job posted successfully",
-      data: job
+      data: job,
     });
   } catch (err) {
     console.error("Error posting job:", err);

@@ -41,10 +41,11 @@ export async function register({ full_name, email, password, role }) {
     });
 
     const data = await response.json();
-if (!response.ok) {
-  const errorMessage = data.message || data.error || data.detail || "Login failed";
-  throw new Error(errorMessage);
-}
+    if (!response.ok) {
+      const errorMessage =
+        data.message || data.error || data.detail || "Login failed";
+      throw new Error(errorMessage);
+    }
     return data;
   } catch (error) {
     throw error;
@@ -84,8 +85,6 @@ export async function verifyOtp({ email, otp }) {
 
     if (!response.ok) throw new Error(data.detail || "OTP verification failed");
 
-
-
     return data;
   } catch (error) {
     throw error;
@@ -94,15 +93,13 @@ export async function verifyOtp({ email, otp }) {
 
 export async function verifyEmailOtp({ email, otp }) {
   try {
-
-    const token = Cookies.get("token"); 
+    const token = Cookies.get("token");
 
     const response = await fetch(`${API_BASE}/auth/verify-email-otp/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-CSRFToken": token,
-
       },
       body: JSON.stringify({ email, otp }),
     });
@@ -110,8 +107,6 @@ export async function verifyEmailOtp({ email, otp }) {
     const data = await response.json();
 
     if (!response.ok) throw new Error(data.detail || "OTP verification failed");
-
-
 
     return data;
   } catch (error) {
@@ -121,12 +116,9 @@ export async function verifyEmailOtp({ email, otp }) {
 
 export async function getProfile() {
   try {
-
-     const token = Cookies.get("token"); 
+    const token = Cookies.get("token");
 
     if (!token) throw new Error("Token is missing");
-
-
 
     const response = await fetch(`${API_BASE}/users/profile`, {
       method: "GET",
@@ -136,8 +128,6 @@ export async function getProfile() {
       },
       credentials: "include",
     });
-
-
 
     const data = await response.json();
     if (!response.ok) throw new Error(data.detail || "Failed to fetch profile");
@@ -181,29 +171,25 @@ export async function updateProfile(profileData) {
 
 // api/auth.js
 
-export async function submitJobApplication(jobId, coverLetter) {
-  const response = await fetch(`${API_BASE}/institutions/job-applications/`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${Cookies.get("access_token")}`,
-    },
-    credentials: "include",
-    body: JSON.stringify({
-      job_id: jobId,
-      cover_letter: coverLetter || "",
-    }),
-  });
-
-  const result = await response.json();
-
-  if (!response.ok) {
-    throw new Error(result.error || "Submission failed");
+export async function submitJobApplication(jobId, formData) {
+  const data = new FormData();
+  data.append("jobId", jobId);
+  data.append("coverLetter", formData.additionalInfo);
+  if (formData.resume) {
+    data.append("resume", formData.resume);
   }
 
-  return result;
-}
+  const response = await fetch(`${API_BASE}/jobApplications/apply`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${Cookies.get("token")}`,
+    },
+    body: data,
+  });
 
+  if (!response.ok) throw new Error("Application failed");
+  return await response.json();
+}
 
 export async function updateEmailWithOtp(email) {
   try {

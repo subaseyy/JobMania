@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import JobCard from "./JobCard";
 import Pagination from "./Pagination";
 
@@ -15,21 +15,89 @@ export default function JobList({
   setCategories,
   setJobLevels,
   setSalaryRanges,
+  getCompanyByJobId,
 }) {
   const [viewMode, setViewMode] = useState("list");
+  const [appliedStatus, setAppliedStatus] = useState({}); // { [jobId]: true/false }
+
   const jobsPerPage = viewMode === "list" ? 5 : 6;
+
   const sortedJobs = [...filteredJobs].sort((a, b) => {
-    if (sortOption === "Newest") {
-      return b.id - a.id;
-    } else {
-      return b.applicants - a.applicants;
-    }
+    if (sortOption === "Newest") return b.id - a.id;
+    else return b.applicants - a.applicants;
   });
 
   const indexOfLastJob = currentPage * jobsPerPage;
   const indexOfFirstJob = indexOfLastJob - jobsPerPage;
   const currentJobs = sortedJobs.slice(indexOfFirstJob, indexOfLastJob);
   const totalPages = Math.ceil(sortedJobs.length / jobsPerPage);
+
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(";").shift();
+  }
+
+  // Only fetch status for jobs on the current page that don't have status yet
+  useEffect(() => {
+    async function fetchAppliedStatus() {
+      const jobsToCheck = currentJobs.filter(
+        (job) => appliedStatus[job._id] === undefined
+      );
+      if (jobsToCheck.length === 0) return;
+
+      const token = getCookie("token");
+      const statusUpdates = {};
+
+      await Promise.all(
+        jobsToCheck.map(async (job) => {
+          try {
+            const res = await fetch(
+              `http://localhost:5050/api/jobApplications/${job._id}/check-applied`,
+              {
+                method: "GET",
+                credentials: "include",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+            const data = await res.json();
+            statusUpdates[job._id] = data.applied;
+          } catch {
+            statusUpdates[job._id] = false;
+          }
+        })
+      );
+      setAppliedStatus((prev) => ({ ...prev, ...statusUpdates }));
+    }
+    fetchAppliedStatus();
+    // Only runs when currentJobs changes
+    // eslint-disable-next-line
+  }, [currentJobs]);
+
+  // Refresh a specific job’s applied status (after applying)
+  async function refreshAppliedStatusForJob(jobId) {
+    const token = getCookie("token");
+    try {
+      const res = await fetch(
+        `http://localhost:5050/api/jobApplications/${jobId}/check-applied`,
+        {
+          method: "GET",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const data = await res.json();
+      setAppliedStatus((prev) => ({ ...prev, [jobId]: data.applied }));
+    } catch {
+      setAppliedStatus((prev) => ({ ...prev, [jobId]: false }));
+    }
+  }
 
   return (
     <div className="col-span-3 flex flex-col min-h-[80vh]">
@@ -103,8 +171,15 @@ export default function JobList({
         }`}
       >
         {currentJobs.length > 0 ? (
-          currentJobs.map((job) => (
-            <JobCard key={job.id} job={job} viewMode={viewMode} />
+          currentJobs.map((job, index) => (
+            <JobCard
+              key={job._id || index}
+              job={job}
+              viewMode={viewMode}
+              getCompanyByJobId={getCompanyByJobId}
+              applied={appliedStatus[job._id]}
+              refreshAppliedStatusForJob={refreshAppliedStatusForJob}
+            />
           ))
         ) : (
           <div className="text-center py-10 col-span-2">
@@ -128,7 +203,7 @@ export default function JobList({
         )}
       </div>
 
-      {/* Pagination Below Job Cards */}
+      {/* Pagination */}
       {filteredJobs.length > jobsPerPage && (
         <div className="mt-6">
           <Pagination
