@@ -3,17 +3,17 @@ import React, { useEffect, useRef, useState } from "react";
 import { Plus, SquarePen, Trash2, X } from "lucide-react";
 import { getProfile, updateProfile } from "@/lib/api/Auth";
 
+// Modal dialog for add/edit
 const Modal = ({ isOpen, onClose, children }) => {
   if (!isOpen) return null;
-
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
+      onClick={e => e.target === e.currentTarget && onClose()}
     >
       <div
         className="bg-white p-6 rounded-lg w-full max-w-2xl shadow-lg relative"
-        onClick={(e) => e.stopPropagation()}
+        onClick={e => e.stopPropagation()}
       >
         <button
           onClick={onClose}
@@ -59,16 +59,24 @@ const EducationSection = () => {
     fetchEducations();
   }, []);
 
-  const handleInputChange = (e) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  // Input field change handler
+  const handleInputChange = e => {
+    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleFileChange = (e) => {
+  // Logo/image file handler
+  const handleFileChange = e => {
     const file = e.target.files[0];
+     const maxSize = 60 * 1024; // 60 KB in bytes
+  if (file.size > maxSize) {
+    alert("File too large. Please upload an image under 60KB.");
+    return;
+  }
+  
     if (!file) return;
     const reader = new FileReader();
     reader.onloadend = () => {
-      setForm((prev) => ({
+      setForm(prev => ({
         ...prev,
         logo: reader.result,
         logoFile: file,
@@ -77,10 +85,10 @@ const EducationSection = () => {
     reader.readAsDataURL(file);
   };
 
-  const triggerFileInput = () => {
-    fileInputRef.current?.click();
-  };
+  // File input trigger
+  const triggerFileInput = () => fileInputRef.current?.click();
 
+  // Start add modal
   const startAdd = () => {
     setForm({
       university: "",
@@ -93,11 +101,13 @@ const EducationSection = () => {
     setEditingId("new");
   };
 
+  // Start edit modal
   const startEdit = (edu, index) => {
     setForm({ ...edu, logoFile: null });
     setEditingId(index);
   };
 
+  // Cancel editing/adding
   const cancelEdit = () => {
     setEditingId(null);
     setForm({
@@ -110,6 +120,7 @@ const EducationSection = () => {
     });
   };
 
+  // Save to backend
   const saveEducation = async () => {
     try {
       const updated = [...educations];
@@ -131,7 +142,8 @@ const EducationSection = () => {
     }
   };
 
-  const deleteEducation = async (index) => {
+  // Delete from backend
+  const deleteEducation = async index => {
     try {
       const updated = educations.filter((_, i) => i !== index);
       const res = await updateProfile({ educations: updated });
@@ -143,6 +155,7 @@ const EducationSection = () => {
     }
   };
 
+  // Display two by default, or all
   const visibleEducations = showAll ? educations : educations.slice(0, 2);
 
   if (loading) return <div className="p-6">Loading education...</div>;
@@ -159,9 +172,10 @@ const EducationSection = () => {
         </button>
       </div>
 
+      {/* Display education cards */}
       {visibleEducations.map((edu, index) => (
         <div key={index} className={`flex gap-4 ${index !== visibleEducations.length - 1 ? "pb-6 mb-6 border-b" : ""}`}>
-          <img src={edu.logo} alt={edu.university} className="w-12 h-12 rounded-full object-cover bg-gray-100" />
+          <img src={edu.logo || "/jobs/sample.png"} alt={edu.university} className="w-12 h-12 rounded-full object-cover bg-gray-100" />
           <div className="flex-1">
             <div className="flex justify-between">
               <div>
@@ -181,6 +195,7 @@ const EducationSection = () => {
         </div>
       ))}
 
+      {/* Show more/less button */}
       {educations.length > 2 && (
         <div className="text-center mt-4">
           <button
@@ -192,10 +207,11 @@ const EducationSection = () => {
         </div>
       )}
 
+      {/* Modal for add/edit */}
       <Modal isOpen={editingId !== null} onClose={cancelEdit}>
         <h3 className="text-lg font-semibold mb-4">{editingId === "new" ? "Add Education" : "Edit Education"}</h3>
         <div className="grid grid-cols-2 gap-3 mb-2">
-          {["university", "degree", "duration"].map((field) => (
+          {["university", "degree", "duration"].map(field => (
             <input
               key={field}
               name={field}

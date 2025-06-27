@@ -12,13 +12,11 @@ const ContactInfo = () => {
   });
   const [loading, setLoading] = useState(true);
 
-  // Fetch data on mount
   useEffect(() => {
     const fetchData = async () => {
       try {
         const res = await getProfile();
         const { profile } = res.data;
-
         const details = profile.additional_details || {};
         setContact({
           email: details.email || "",
@@ -31,7 +29,6 @@ const ContactInfo = () => {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
@@ -82,7 +79,9 @@ const ContactInfo = () => {
         <div className="flex space-x-2">
           <Mail size={20} className="text-[#7C8493] mt-1" />
           <div className="flex flex-col w-full">
-            <label className="text-base text-[#7C8493] font-epilogue">Email</label>
+            <label className="text-base text-[#7C8493] font-epilogue">
+              Email
+            </label>
             {isEditing ? (
               <input
                 type="email"
@@ -91,7 +90,9 @@ const ContactInfo = () => {
                 className="border border-[#D6DDEB] px-3 py-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#4640DE]"
               />
             ) : (
-              <span className="text-[#25324B] font-epilogue text-base">{contact.email}</span>
+              <span className="text-[#25324B] font-epilogue text-base">
+                {contact.email}
+              </span>
             )}
           </div>
         </div>
@@ -100,7 +101,9 @@ const ContactInfo = () => {
         <div className="flex space-x-2">
           <Smartphone size={20} className="text-[#7C8493] mt-1" />
           <div className="flex flex-col w-full">
-            <label className="text-base text-[#7C8493] font-epilogue">Phone</label>
+            <label className="text-base text-[#7C8493] font-epilogue">
+              Phone
+            </label>
             {isEditing ? (
               <input
                 type="tel"
@@ -109,7 +112,9 @@ const ContactInfo = () => {
                 className="border border-[#D6DDEB] px-3 py-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#4640DE]"
               />
             ) : (
-              <span className="text-[#25324B] font-epilogue text-base">{contact.phone}</span>
+              <span className="text-[#25324B] font-epilogue text-base">
+                {contact.phone}
+              </span>
             )}
           </div>
         </div>
@@ -118,7 +123,9 @@ const ContactInfo = () => {
         <div className="flex space-x-2">
           <Languages size={20} className="text-[#7C8493] mt-1" />
           <div className="flex flex-col w-full">
-            <label className="text-base text-[#7C8493] font-epilogue">Languages</label>
+            <label className="text-base text-[#7C8493] font-epilogue">
+              Languages
+            </label>
             {isEditing ? (
               <input
                 type="text"
@@ -127,7 +134,9 @@ const ContactInfo = () => {
                 className="border border-[#D6DDEB] px-3 py-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#4640DE]"
               />
             ) : (
-              <span className="text-[#25324B] font-epilogue text-base">{contact.languages}</span>
+              <span className="text-[#25324B] font-epilogue text-base">
+                {contact.languages}
+              </span>
             )}
           </div>
         </div>

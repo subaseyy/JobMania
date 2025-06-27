@@ -18,6 +18,7 @@ connectDB();
 
 // Middleware
 app.use(express.json());
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes
 app.use(cors({ origin: "http://localhost:3000", credentials: true }));

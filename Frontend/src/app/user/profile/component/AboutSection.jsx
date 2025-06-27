@@ -12,7 +12,7 @@ const AboutSection = ({ about = "", onUpdate }) => {
   const [aboutText, setAboutText] = useState(about);
   const [tempAboutText, setTempAboutText] = useState(about);
 
-  // Keep state in sync with parent
+  // Sync with parent updates
   useEffect(() => {
     setAboutText(about);
     setTempAboutText(about);
@@ -21,6 +21,7 @@ const AboutSection = ({ about = "", onUpdate }) => {
   const handleSave = async () => {
     try {
       await onUpdate({ about: tempAboutText });
+      setAboutText(tempAboutText); // local sync
       setIsEditing(false);
     } catch (error) {
       alert("Update failed. Please try again.");
@@ -32,10 +33,6 @@ const AboutSection = ({ about = "", onUpdate }) => {
     setIsEditing(false);
   };
 
-  const handleTextChange = (e) => {
-    setTempAboutText(e.target.value);
-  };
-
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 border border-[#D6DDEB]">
       <div className="flex items-center justify-between mb-4">
@@ -45,7 +42,7 @@ const AboutSection = ({ about = "", onUpdate }) => {
         {!isEditing ? (
           <button
             onClick={() => setIsEditing(true)}
-            className="p-2.5 border border-[#D6DDEB] hover:bg-[#4640DE] text-[#4640DE] hover:text-white hover:border-[#4640DE] transition-colors duration-200"
+            className="p-2.5 border border-[#D6DDEB] hover:bg-[#4640DE] text-[#4640DE] hover:text-white hover:border-[#4640DE] transition"
           >
             <SquarePen size={16} />
           </button>
@@ -53,13 +50,13 @@ const AboutSection = ({ about = "", onUpdate }) => {
           <div className="flex gap-2">
             <button
               onClick={handleSave}
-              className="px-4 py-2 text-sm font-epilogue font-[600] text-white bg-[#4640DE] hover:bg-[#3730c4] rounded transition-colors duration-200"
+              className="px-4 py-2 text-sm text-white bg-[#4640DE] hover:bg-[#3730c4] rounded"
             >
               Save
             </button>
             <button
               onClick={handleCancel}
-              className="px-4 py-2 text-sm font-epilogue font-[600] text-[#4640DE] border border-[#CCCCF5] hover:bg-[#f0f0ff] rounded transition-colors duration-200"
+              className="px-4 py-2 text-sm text-[#4640DE] border border-[#CCCCF5] hover:bg-[#f0f0ff] rounded"
             >
               Cancel
             </button>
@@ -70,12 +67,12 @@ const AboutSection = ({ about = "", onUpdate }) => {
       {isEditing ? (
         <textarea
           value={tempAboutText}
-          onChange={handleTextChange}
-          className="w-full font-epilogue font-[400] text-base leading-[160%] text-[#515B6F] border border-[#D6DDEB] p-3 rounded focus:outline-none focus:ring-1 focus:ring-[#4640DE] min-h-[200px]"
+          onChange={(e) => setTempAboutText(e.target.value)}
+          className="w-full text-base text-[#515B6F] border border-[#D6DDEB] p-3 rounded focus:outline-none focus:ring-1 focus:ring-[#4640DE] min-h-[200px]"
         />
       ) : (
-        <p className="font-epilogue font-[400] text-base leading-[160%] text-[#515B6F] whitespace-pre-line">
-          {aboutText || "No About section added yet."}
+        <p className="text-base text-[#515B6F] whitespace-pre-line">
+          {about || "No About section added yet."}
         </p>
       )}
     </div>

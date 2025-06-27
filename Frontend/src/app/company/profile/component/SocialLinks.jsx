@@ -1,38 +1,27 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Instagram, Twitter, Globe, SquarePen } from "lucide-react";
-import { getProfile, updateProfile } from "@/lib/api/Auth";
 
-const SocialLinks = () => {
+/**
+ * @param {object} props
+ * @param {object} props.social_links - The user's social_links object
+ * @param {function} props.onUpdate - Callback to update the social_links in backend & parent
+ */
+const SocialLinks = ({ social_links = {}, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [links, setLinks] = useState({
     instagram: "",
     twitter: "",
     website: "",
   });
-  const [loading, setLoading] = useState(true);
 
-  // Fetch profile on mount
   useEffect(() => {
-    const fetchLinks = async () => {
-      try {
-        const res = await getProfile();
-        const { profile } = res.data;
-        const social = profile.social_links || {};
-        setLinks({
-          instagram: social.instagram || "",
-          twitter: social.twitter || "",
-          website: social.website || "",
-        });
-      } catch (err) {
-        console.error("Failed to fetch social links", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchLinks();
-  }, []);
+    setLinks({
+      instagram: social_links.instagram || "",
+      twitter: social_links.twitter || "",
+      website: social_links.website || "",
+    });
+  }, [social_links]);
 
   const handleChange = (platform, value) => {
     setLinks((prev) => ({ ...prev, [platform]: value }));
@@ -40,19 +29,14 @@ const SocialLinks = () => {
 
   const handleSave = async () => {
     try {
-      await updateProfile({ social_links: links });
+      await onUpdate({ social_links: links });
       setIsEditing(false);
     } catch (err) {
-      console.error("Failed to update social links", err);
       alert("Update failed. Please try again.");
     }
   };
 
   const getDisplayUrl = (url) => url.replace(/^https?:\/\//, "");
-
-  if (loading) {
-    return <div className="p-6">Loading social links...</div>;
-  }
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 border border-[#D6DDEB]">
@@ -64,6 +48,7 @@ const SocialLinks = () => {
           <button
             onClick={() => setIsEditing(true)}
             className="p-2.5 border border-[#D6DDEB] hover:bg-[#4640DE] text-[#4640DE] hover:text-white hover:border-[#4640DE] transition"
+            aria-label="Edit social links"
           >
             <SquarePen size={16} />
           </button>
@@ -84,6 +69,7 @@ const SocialLinks = () => {
                 value={links.instagram}
                 onChange={(e) => handleChange("instagram", e.target.value)}
                 className="border border-[#D6DDEB] px-3 py-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#4640DE]"
+                placeholder="Instagram URL"
               />
             ) : (
               links.instagram && (
@@ -113,6 +99,7 @@ const SocialLinks = () => {
                 value={links.twitter}
                 onChange={(e) => handleChange("twitter", e.target.value)}
                 className="border border-[#D6DDEB] px-3 py-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#4640DE]"
+                placeholder="Twitter URL"
               />
             ) : (
               links.twitter && (
@@ -142,6 +129,7 @@ const SocialLinks = () => {
                 value={links.website}
                 onChange={(e) => handleChange("website", e.target.value)}
                 className="border border-[#D6DDEB] px-3 py-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#4640DE]"
+                placeholder="Website URL"
               />
             ) : (
               links.website && (

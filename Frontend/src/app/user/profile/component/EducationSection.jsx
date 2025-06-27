@@ -67,6 +67,12 @@ const EducationSection = () => {
   // Logo/image file handler
   const handleFileChange = e => {
     const file = e.target.files[0];
+     const maxSize = 60 * 1024; // 60 KB in bytes
+  if (file.size > maxSize) {
+    alert("File too large. Please upload an image under 60KB.");
+    return;
+  }
+  
     if (!file) return;
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -169,7 +175,7 @@ const EducationSection = () => {
       {/* Display education cards */}
       {visibleEducations.map((edu, index) => (
         <div key={index} className={`flex gap-4 ${index !== visibleEducations.length - 1 ? "pb-6 mb-6 border-b" : ""}`}>
-          <img src={edu.logo || "/default-avatar.png"} alt={edu.university} className="w-12 h-12 rounded-full object-cover bg-gray-100" />
+          <img src={edu.logo || "/jobs/sample.png"} alt={edu.university} className="w-12 h-12 rounded-full object-cover bg-gray-100" />
           <div className="flex-1">
             <div className="flex justify-between">
               <div>

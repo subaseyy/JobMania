@@ -68,7 +68,7 @@ const ProfilePage = () => {
               profile={profile}
               onUpdate={handleProfileUpdate}
             />
-            <AboutSection profile={profile} onUpdate={handleProfileUpdate} />
+            <AboutSection about={profile.about || ""} onUpdate={handleProfileUpdate} />
             <ExperienceSection
               experiences={profile?.experiences || []}
               onUpdate={handleProfileUpdate}

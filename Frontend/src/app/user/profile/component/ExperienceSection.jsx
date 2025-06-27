@@ -71,6 +71,13 @@ const ExperienceSection = () => {
   // Handle logo file selection
   const handleFileChange = (e) => {
     const file = e.target.files[0];
+
+     const maxSize = 60 * 1024; // 60 KB in bytes
+  if (file.size > maxSize) {
+    alert("File too large. Please upload an image under 60KB.");
+    return;
+  }
+  
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -180,7 +187,7 @@ const ExperienceSection = () => {
           }`}
         >
           <img
-            src={exp.logo || "/default-avatar.png"}
+            src={exp.logo || "/jobs/sample.png"}
             alt={exp.company}
             className="w-12 h-12 rounded-full object-cover bg-gray-100"
           />

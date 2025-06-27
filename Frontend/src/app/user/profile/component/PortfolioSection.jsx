@@ -267,7 +267,7 @@ const PortfolioSection = () => {
               </div>
               <div className="mb-2 h-40 relative">
                 <Image
-                  src={item.image}
+                  src="/profile/portfolio.png"
                   fill
                   alt={item.title}
                   className="object-cover rounded"

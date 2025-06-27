@@ -3,6 +3,10 @@ import React, { useEffect, useState } from "react";
 import { Plus, SquarePen, Trash2, X, Save } from "lucide-react";
 import { getProfile, updateProfile } from "@/lib/api/Auth";
 
+/**
+ * SkillsSection component
+ * Allows viewing, adding, editing, and removing user skills.
+ */
 const SkillsSection = () => {
   const [skills, setSkills] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -12,7 +16,7 @@ const SkillsSection = () => {
   const [editingIndex, setEditingIndex] = useState(null);
   const [editSkillValue, setEditSkillValue] = useState("");
 
-  // Fetch skills from backend
+  // Fetch skills on mount
   useEffect(() => {
     const fetchSkills = async () => {
       try {
@@ -28,7 +32,7 @@ const SkillsSection = () => {
     fetchSkills();
   }, []);
 
-  // Save to backend
+  // Update backend
   const saveSkillsToBackend = async (updatedSkills) => {
     try {
       await updateProfile({ skills: updatedSkills });
@@ -38,11 +42,10 @@ const SkillsSection = () => {
     }
   };
 
-  // Add new skill
+  // Add a new skill
   const handleAddSkill = async () => {
     const trimmed = newSkill.trim();
     if (!trimmed || skills.includes(trimmed)) return;
-
     const updatedSkills = [...skills, trimmed];
     setSkills(updatedSkills);
     setNewSkill("");
@@ -50,7 +53,7 @@ const SkillsSection = () => {
     await saveSkillsToBackend(updatedSkills);
   };
 
-  // Delete skill
+  // Remove skill
   const handleDeleteSkill = async (index) => {
     const updatedSkills = skills.filter((_, i) => i !== index);
     setSkills(updatedSkills);
@@ -61,16 +64,14 @@ const SkillsSection = () => {
     await saveSkillsToBackend(updatedSkills);
   };
 
-  // Edit existing skill
+  // Edit skill handlers
   const startEditSkill = (index) => {
     setEditingIndex(index);
     setEditSkillValue(skills[index]);
   };
-
   const saveEditSkill = async () => {
     const trimmed = editSkillValue.trim();
     if (!trimmed) return;
-
     const updatedSkills = [...skills];
     updatedSkills[editingIndex] = trimmed;
     setSkills(updatedSkills);
@@ -78,7 +79,6 @@ const SkillsSection = () => {
     setEditSkillValue("");
     await saveSkillsToBackend(updatedSkills);
   };
-
   const cancelEdit = () => {
     setEditingIndex(null);
     setEditSkillValue("");
@@ -93,16 +93,18 @@ const SkillsSection = () => {
         <div className="flex gap-2">
           <button
             onClick={() => {
-              setShowAddForm(!showAddForm);
+              setShowAddForm((s) => !s);
               setEditingIndex(null);
             }}
             className="p-2 border border-[#D6DDEB] hover:bg-[#4640DE] text-[#4640DE] hover:text-white"
+            title={showAddForm ? "Close add form" : "Add skill"}
           >
             {showAddForm ? <X size={20} /> : <Plus size={20} />}
           </button>
           <button
-            onClick={() => setIsEditing(!isEditing)}
+            onClick={() => setIsEditing((e) => !e)}
             className="p-2 border border-[#D6DDEB] hover:bg-[#4640DE] text-[#4640DE] hover:text-white"
+            title={isEditing ? "Done editing" : "Edit skills"}
           >
             {isEditing ? <Save size={16} /> : <SquarePen size={16} />}
           </button>
@@ -139,11 +141,12 @@ const SkillsSection = () => {
                   value={editSkillValue}
                   onChange={(e) => setEditSkillValue(e.target.value)}
                   className="px-4 py-2 border border-[#4640DE] rounded"
+                  autoFocus
                 />
-                <button onClick={saveEditSkill} className="text-green-500">
+                <button onClick={saveEditSkill} className="text-green-500" title="Save">
                   <Save size={16} />
                 </button>
-                <button onClick={cancelEdit} className="text-gray-500">
+                <button onClick={cancelEdit} className="text-gray-500" title="Cancel">
                   <X size={16} />
                 </button>
               </div>
@@ -157,12 +160,14 @@ const SkillsSection = () => {
                     <button
                       onClick={() => startEditSkill(index)}
                       className="p-1 bg-white border border-gray-300 rounded-full text-blue-500 hover:bg-blue-50"
+                      title="Edit"
                     >
                       <SquarePen size={12} />
                     </button>
                     <button
                       onClick={() => handleDeleteSkill(index)}
                       className="p-1 bg-white border border-gray-300 rounded-full text-red-500 hover:bg-red-50"
+                      title="Delete"
                     >
                       <Trash2 size={12} />
                     </button>

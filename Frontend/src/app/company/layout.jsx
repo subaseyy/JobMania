@@ -56,6 +56,8 @@ export default function Layout({ children }) {
     { label: "My Jobs", icon: ClipboardList, path: "/company/my-jobs" },
     { label: "Add Job", icon: ClipboardList, path: "/company/add-jobs" },
     { label: "Job Applied", icon: ClipboardList, path: "/company/job-applied" },
+
+
   ];
 
   const settingsItems = [

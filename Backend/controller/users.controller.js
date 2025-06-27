@@ -4,10 +4,10 @@ const bcrypt = require('bcryptjs');
 const profileModel = require("../models/profile.model");
 
 
-
 exports.getProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    // Populate the linked profile
+    const user = await User.findById(req.user.id).populate('profile');
 
     if (!user) {
       return res.status(404).json({
@@ -16,7 +16,12 @@ exports.getProfile = async (req, res) => {
       });
     }
 
-    const profile = user.profile;
+    if (!user.profile) {
+      return res.status(404).json({
+        status: 404,
+        message: "Profile not found",
+      });
+    }
 
     return res.status(200).json({
       status: 200,
@@ -27,7 +32,7 @@ exports.getProfile = async (req, res) => {
           email: user.email,
           role: user.role,
         },
-        profile,
+        profile: user.profile, // now contains full profile data
       },
     });
   } catch (err) {
@@ -38,6 +43,7 @@ exports.getProfile = async (req, res) => {
     });
   }
 };
+
 
 exports.updateProfile = async (req, res) => {
   try {
@@ -51,8 +57,7 @@ exports.updateProfile = async (req, res) => {
       education,
       title,
       company,
-      location,
-      bg_image,
+      location,      
       about,
       additional_details,
       social_links,
@@ -62,7 +67,15 @@ exports.updateProfile = async (req, res) => {
       educations,
     } = req.body;
 
-    const profile_picture = req.file ? `/uploads/${req.file.filename}` : undefined;
+    const profile_picture = req.files?.profile_picture?.[0]?.filename
+  ? `/uploads/${req.files.profile_picture[0].filename}`
+  : undefined;
+
+const bg_image = req.files?.bg_image?.[0]?.filename
+  ? `/uploads/${req.files.bg_image[0].filename}`
+  : undefined;
+
+
 
     const user = await User.findById(userId);
     if (!user) {
@@ -74,7 +87,7 @@ exports.updateProfile = async (req, res) => {
       profile = new Profile({ user: userId });
     }
 
-    // === Core Field Updates ===
+
     profile.full_name = full_name || profile.full_name || user.full_name;
     profile.contact_number = contact_number || profile.contact_number;
     profile.resume_url = resume_url || profile.resume_url;
@@ -90,8 +103,23 @@ exports.updateProfile = async (req, res) => {
 
     if (Array.isArray(skills)) profile.skills = skills;
     if (Array.isArray(portfolios)) profile.portfolios = portfolios;
-    if (Array.isArray(experiences)) profile.experiences = experiences;
-    if (Array.isArray(educations)) profile.educations = educations;
+    if (Array.isArray(experiences)) {
+      profile.experiences = experiences.map((exp) => {
+        if (!exp.logo && logo) {
+          return { ...exp, logo };
+        }
+        return exp;
+      });
+    }
+
+    if (Array.isArray(educations)) {
+      profile.educations = educations.map((edu) => {
+        if (!edu.logo && logo) {
+          return { ...edu, logo };
+        }
+        return edu;
+      });
+    }
 
 
     if (additional_details) {
@@ -183,7 +211,6 @@ exports.getProfileById = async (req, res) => {
   }
 };
 
-
 exports.updateProfileById = async (req, res) => {
   try {
     const userId = req.params.id;
@@ -197,7 +224,6 @@ exports.updateProfileById = async (req, res) => {
       title,
       company,
       location,
-      bg_image,
       about,
       additional_details,
       social_links,
@@ -207,49 +233,86 @@ exports.updateProfileById = async (req, res) => {
       educations,
     } = req.body;
 
-    const profile_picture = req.file ? `/uploads/${req.file.filename}` : undefined;
+    // Extract uploaded files
+    const profile_picture = req.files?.profile_picture?.[0]?.filename
+      ? `/uploads/${req.files.profile_picture[0].filename}`
+      : undefined;
 
+    const bg_image = req.files?.bg_image?.[0]?.filename
+      ? `/uploads/${req.files.bg_image[0].filename}`
+      : undefined;
+
+    const logo = req.files?.logo?.[0]?.filename
+      ? `/uploads/${req.files.logo[0].filename}`
+      : undefined;
+
+    console.log("📷 Uploaded profile_picture:", profile_picture);
+    console.log("🖼️ Uploaded bg_image:", bg_image);
+    console.log("🏷️ Uploaded logo:", logo);
+
+    // Fetch user
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ status: 404, message: "User not found" });
     }
 
+    // Fetch or create profile
     let profile = await Profile.findOne({ user: userId });
     if (!profile) {
       profile = new Profile({ user: userId });
     }
 
-    profile.full_name = full_name || profile.full_name || user.name;
-    profile.contact_number = contact_number || profile.contact_number;
-    profile.resume_url = resume_url || profile.resume_url;
-    profile.profile_picture = profile_picture || profile.profile_picture;
-    profile.experience = experience || profile.experience;
-    profile.education = education || profile.education;
-    profile.title = title || profile.title;
-    profile.company = company || profile.company;
-    profile.location = location || profile.location;
-    profile.bg_image = bg_image || profile.bg_image;
-    profile.about = about || profile.about;
+    // Update fields
+    if (full_name) profile.full_name = full_name;
+    if (contact_number) profile.contact_number = contact_number;
+    if (resume_url) profile.resume_url = resume_url;
+    if (experience) profile.experience = experience;
+    if (education) profile.education = education;
+    if (title) profile.title = title;
+    if (company) profile.company = company;
+    if (location) profile.location = location;
+    if (about) profile.about = about;
+    if (profile_picture) profile.profile_picture = profile_picture;
+    if (bg_image) profile.bg_image = bg_image;
 
-    if (Array.isArray(skills)) profile.skills = skills;
-    if (Array.isArray(portfolios)) profile.portfolios = portfolios;
-    if (Array.isArray(experiences)) profile.experiences = experiences;
-    if (Array.isArray(educations)) profile.educations = educations;
+    // Handle arrays (ensure they’re parsed)
+    if (skills) profile.skills = Array.isArray(skills) ? skills : [skills];
+    if (portfolios) profile.portfolios = Array.isArray(portfolios) ? portfolios : [portfolios];
+  if (Array.isArray(experiences)) {
+      profile.experiences = experiences.map((exp, index) => {
+        if (index === experiences.length - 1 && logo) {
+          return { ...exp, logo };
+        }
+        return exp;
+      });
+    }
 
-    if (additional_details) {
+    if (Array.isArray(educations)) {
+      profile.educations = educations.map((edu, index) => {
+        if (index === educations.length - 1 && logo) {
+          return { ...edu, logo };
+        }
+        return edu;
+      });
+    }
+
+
+    // Handle objects
+    if (additional_details && typeof additional_details === "object") {
       profile.additional_details = {
         ...profile.additional_details,
         ...additional_details,
       };
     }
 
-    if (social_links) {
+    if (social_links && typeof social_links === "object") {
       profile.social_links = {
         ...profile.social_links,
         ...social_links,
       };
     }
 
+    // Update user full name if changed
     if (full_name) {
       user.full_name = full_name;
       await user.save();
@@ -257,6 +320,7 @@ exports.updateProfileById = async (req, res) => {
 
     await profile.save();
 
+    // Ensure user is linked to profile
     if (!user.profile) {
       user.profile = profile._id;
       await user.save();
@@ -275,6 +339,8 @@ exports.updateProfileById = async (req, res) => {
     });
   }
 };
+
+
 
 exports.deleteProfileById = async (req, res) => {
   try {
