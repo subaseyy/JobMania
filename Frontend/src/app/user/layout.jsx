@@ -54,10 +54,10 @@ export default function Layout({ children }) {
 
   const navItems = [
     { label: "Dashboard", icon: Home, path: "/user/dashboard" },
-    // { label: "Messages", icon: MessageSquare, badge: 1, path: "/user/messages" },
+
     { label: "Applications", icon: FileText, path: "/user/application" },
     { label: "Find Jobs", icon: Search, path: "/user/job" },
-    // { label: "Browse Companies", icon: Building2, path: "/user/companies" },
+
     { label: "My Public Profile", icon: User, path: "/user/profile" },
   ];
 
@@ -210,7 +210,7 @@ export default function Layout({ children }) {
           <div className="flex items-center gap-2">
             <button
               onClick={() => {
-                router.push("/dashboard/dashboard-overview");
+                router.push("/");
                 closeSidebar();
               }}
               className="flex items-center gap-2 px-3 py-2 border border-[#CCCCF5] font-epilogue font-semibold text-[#4640DE] hover:bg-[#E9EBFD] rounded-lg"
@@ -219,9 +219,7 @@ export default function Layout({ children }) {
               <p className="block sm:hidden text-sm">Home</p>
               <p className="hidden sm:block text-base">Back to homepage</p>
             </button>
-            <div className="p-2 text-[#25324B] hover:bg-gray-100 rounded-full">
-              <NotificationSystem />
-            </div>
+            
           </div>
         </header>
 

@@ -1,47 +1,23 @@
 import { ArrowRight, MoreHorizontal } from "lucide-react";
 import Image from "next/image";
+import { format } from "date-fns";
+import Link from "next/link";
 
-export default function RecentApplications() {
-  const applications = [
-    {
-      position: "Social Media Assistant",
-      company: "Nomad",
-      location: "Paris, France",
-      type: "Full-Time",
-      date: "24 July 2021",
-      status: "In Review",
-      icon: "/jobs/sample.png",
-    },
-    {
-      position: "Social Media Assistant",
-      company: "Udacity",
-      location: "New York, USA",
-      type: "Full-Time",
-      date: "23 July 2021",
-      status: "Shortlisted",
-      icon: "/jobs/sample.png",
-    },
-    {
-      position: "Social Media Assistant",
-      company: "Packer",
-      location: "Madrid, Spain",
-      type: "Full-Time",
-      date: "22 July 2021",
-      status: "Declined",
-      icon: "/jobs/sample.png",
-    },
-  ];
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "In Review":
-        return "border-[#FFB836] text-[#FFB836] border-[1px]";
-      case "Shortlisted":
-        return "text-[#4640DE] border-[#4640DE] border-[1px]";
-      case "Declined":
-        return "text-[#FF6550] border-[#FF6550] border-[1px]";
+export default function RecentApplications({ applications = [] }) {
+  const getStatusColor = (status = "") => {
+    switch (status.toLowerCase()) {
+      case "applied":
+        return "text-blue-600 border border-blue-200";
+      case "shortlisted":
+        return "text-cyan-600 border border-cyan-200";
+      case "interview":
+        return "text-amber-600 border border-amber-200";
+      case "rejected":
+        return "text-red-500 border border-red-200";
+      case "hired":
+        return "text-green-600 border border-green-200";
       default:
-        return "bg-gray-100 text-gray-600";
+        return "text-gray-500 border border-gray-200";
     }
   };
 
@@ -51,10 +27,11 @@ export default function RecentApplications() {
         Recent Applications History
       </h3>
       <div className="h-[1px] bg-[#D6DDEB] w-full my-6" />
+
       <div className="space-y-2">
-        {applications.map((app, index) => (
+        {applications.slice(0, 5).map((app, index) => (
           <div
-            key={index}
+            key={app._id || index}
             className={`p-4 rounded-lg flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 ${
               index % 2 === 0 ? "bg-[#F8F8FD]" : "bg-white"
             }`}
@@ -62,7 +39,7 @@ export default function RecentApplications() {
             <div className="flex items-center">
               <div className="mr-4 shrink-0">
                 <Image
-                  src={app.icon}
+                  src={"/jobs/sample.png"}
                   alt="Company Logo"
                   width={40}
                   height={40}
@@ -70,10 +47,10 @@ export default function RecentApplications() {
               </div>
               <div>
                 <div className="font-epilogue font-bold text-lg text-[#25324B] mb-1">
-                  {app.position}
+                  {app.job?.title || "Unknown Role"}
                 </div>
                 <div className="font-epilogue font-normal text-base text-[#7C8493]">
-                  {app.company} • {app.location} • {app.type}
+                  {app.job?.company || "Unknown Company"} • {app.job?.location || "Unknown"} • {app.job?.type || "Full-Time"}
                 </div>
               </div>
             </div>
@@ -83,17 +60,13 @@ export default function RecentApplications() {
                 Date Applied
               </div>
               <div className="font-epilogue font-normal text-base text-[#7C8493]">
-                {app.date}
+                {app.appliedAt ? format(new Date(app.appliedAt), "dd MMM yyyy") : "N/A"}
               </div>
             </div>
 
             <div className="sm:self-center">
-              <span
-                className={`font-epilogue font-semibold text-sm px-3 py-2 rounded-full ${getStatusColor(
-                  app.status
-                )}`}
-              >
-                {app.status}
+              <span className={`font-epilogue font-semibold text-sm px-3 py-2 rounded-full ${getStatusColor(app.status)}`}>
+                {app.status || "Unknown"}
               </span>
             </div>
 
@@ -105,11 +78,14 @@ export default function RecentApplications() {
           </div>
         ))}
       </div>
+
       <div className="mt-6 flex justify-center">
-        <button className="flex items-center font-epilogue font-semibold text-base text-[#4640DE]">
-          View all applications history
-          <ArrowRight size={16} className="ml-1" />
-        </button>
+        <Link href="/user/application" passHref>
+  <button className="flex items-center font-epilogue font-semibold text-base text-[#4640DE]">
+    View all applications history
+    <ArrowRight size={16} className="ml-1" />
+  </button>
+</Link>
       </div>
     </div>
   );
