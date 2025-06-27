@@ -2,10 +2,10 @@
 import { useEffect, useState, useRef } from "react";
 import { getProfile, updateProfile } from "@/lib/api/Auth";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import Cookies from "js-cookie";
 
 export default function ProfileForm() {
+  const [user, setUser] = useState({});
   const [profile, setProfile] = useState({
     full_name: "",
     contact_number: "",
@@ -28,27 +28,33 @@ export default function ProfileForm() {
   const router = useRouter();
 
   useEffect(() => {
-  async function fetchProfile() {
-    try {
-      const response = await getProfile();
-      const { user, profile } = response.data; // ✅ correctly extract
+    async function fetchProfile() {
+      try {
+        const response = await getProfile();
+        const { user, profile } = response.data;
 
-      setProfile(profile || {}); // safely set profile data
-      setSkillsInput(profile?.skills?.join(", ") || "");
-      setPreviewImage(`${process.env.NEXT_PUBLIC_BASE_URL}${profile?.profile_picture}`|| "");
-
-      setError("");
-    } catch (err) {
-      console.error("Profile fetch error:", err);
-      setError(
-        err.message || "Failed to load profile. You may need to create one."
-      );
-    } finally {
-      setLoading(false);
+        setUser(user || {});
+        setProfile(profile || {});
+        setSkillsInput(profile?.skills?.join(", ") || "");
+        setPreviewImage(
+          profile?.profile_picture
+            ? profile.profile_picture.startsWith("http")
+              ? profile.profile_picture
+              : `${process.env.NEXT_PUBLIC_BASE_URL}${profile.profile_picture}`
+            : ""
+        );
+        setError("");
+      } catch (err) {
+        console.error("Profile fetch error:", err);
+        setError(
+          err.message || "Failed to load profile. You may need to create one."
+        );
+      } finally {
+        setLoading(false);
+      }
     }
-  }
-  fetchProfile();
-}, []);
+    fetchProfile();
+  }, []);
 
   const startEditing = () => {
     setSkillsInput(profile.skills?.join(", ") || "");
@@ -59,7 +65,13 @@ export default function ProfileForm() {
 
   const cancelEditing = () => {
     setSkillsInput(profile.skills?.join(", ") || "");
-    setPreviewImage( `${process.env.NEXT_PUBLIC_BASE_URL}${profile?.profile_picture}` || "");
+    setPreviewImage(
+      profile?.profile_picture
+        ? profile.profile_picture.startsWith("http")
+          ? profile.profile_picture
+          : `${process.env.NEXT_PUBLIC_BASE_URL}${profile.profile_picture}`
+        : ""
+    );
     setIsEditing(false);
     setError("");
     setSuccess("");
@@ -129,12 +141,6 @@ export default function ProfileForm() {
 
         formData.append("profile_picture", profile.profile_picture);
 
-        // Log FormData contents
-        console.log("Submitting FormData:");
-        for (let [key, value] of formData.entries()) {
-          console.log(`${key}:`, value);
-        }
-
         await updateProfile(formData);
       } else {
         const profileData = {
@@ -149,20 +155,23 @@ export default function ProfileForm() {
             .filter(Boolean),
         };
 
-        // Log JSON data
-        console.log("Submitting JSON profile data:", profileData);
-
         await updateProfile(profileData);
       }
 
       // Refresh profile data after update
       const updatedData = await getProfile();
-    const { profile: updatedProfile } = updatedData.data;
+      const { user: updatedUser, profile: updatedProfile } = updatedData.data;
 
-    setProfile(updatedProfile);
-    setSkillsInput(updatedProfile.skills?.join(", ") || "");
-    setPreviewImage(updatedProfile.profile_picture || "");
-
+      setUser(updatedUser || {});
+      setProfile(updatedProfile);
+      setSkillsInput(updatedProfile.skills?.join(", ") || "");
+      setPreviewImage(
+        updatedProfile.profile_picture
+          ? updatedProfile.profile_picture.startsWith("http")
+            ? updatedProfile.profile_picture
+            : `${process.env.NEXT_PUBLIC_BASE_URL}${updatedProfile.profile_picture}`
+          : ""
+      );
       setSuccess("Profile updated successfully!");
       setIsEditing(false);
       setTimeout(() => setSuccess(""), 3000);
@@ -184,19 +193,18 @@ export default function ProfileForm() {
   return (
     <div className="container bg-white shadow-lg rounded-xl overflow-hidden mt-6">
       <div className="md:flex">
+        {/* Left: Profile Picture and Quick Stats */}
         <div className="md:w-1/3 bg-gray-50 p-6 flex flex-col items-center">
           <div className="relative group">
             <div className="w-40 h-40 rounded-full overflow-hidden border-4 border-white shadow-md">
               {previewImage ? (
                 <img
-                  src={`${previewImage}`}
-         alt="Profile"
-            width={160}
-        height={160}
-              className="object-cover w-full h-full rounded-full"
-/>
-
-
+                  src={previewImage}
+                  alt="Profile"
+                  width={160}
+                  height={160}
+                  className="object-cover w-full h-full rounded-full"
+                />
               ) : (
                 <div className="bg-gray-200 w-full h-full flex items-center justify-center">
                   <svg
@@ -286,10 +294,10 @@ export default function ProfileForm() {
           </div>
         </div>
 
-        {/* Right Column */}
+        {/* Right: Profile Details / Edit Form */}
         <div className="md:w-2/3 p-6">
           <h2 className="text-2xl font-semibold text-gray-800 mb-6">
-            {profile.full_name ? "Your Profile" : "Create Profile"}
+            {user.full_name || profile.full_name ? "Your Profile" : "Create Profile"}
           </h2>
 
           {error && (
@@ -332,14 +340,23 @@ export default function ProfileForm() {
           )}
 
           {!isEditing ? (
-            // Read-only profile display with Edit button
+            // Read-only profile display
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Full Name
                 </label>
                 <p className="p-2.5 border border-gray-300 rounded-md bg-gray-50">
-                  {profile.full_name || "-"}
+                  {user.full_name || profile.full_name || "-"}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email
+                </label>
+                <p className="p-2.5 border border-gray-300 rounded-md bg-gray-50">
+                  {user.email || "-"}
                 </p>
               </div>
 

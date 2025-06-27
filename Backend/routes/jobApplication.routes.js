@@ -54,7 +54,7 @@ router.get("/my-applications", protect, getMyApplications);
 router.patch(
   "/applications/:id/status",
   protect,
-  authorize("admin", "recruiter"),
+  authorize("admin", "company"),
   updateApplicationStatus
 );
 

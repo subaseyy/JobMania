@@ -1,5 +1,4 @@
 "use client";
-
 import { useContext, useState, useEffect } from "react";
 import {
   Home,
@@ -54,12 +53,12 @@ export default function Layout({ children }) {
   const pageTitle = titleMap[currentSlug] || currentSlug;
 
   const navItems = [
-    { label: "Dashboard", icon: Home, path: "/dashboard/dashboard-overview" },
-    { label: "Messages", icon: MessageSquare, badge: 1, path: "/dashboard/messages" },
-    { label: "Applications", icon: FileText, path: "/dashboard/application" },
-    { label: "Find Jobs", icon: Search, path: "/dashboard/job" },
-    { label: "Browse Companies", icon: Building2, path: "/dashboard/companies" },
-    { label: "My Public Profile", icon: User, path: "/dashboard/profile" },
+    { label: "Dashboard", icon: Home, path: "/user/dashboard" },
+    // { label: "Messages", icon: MessageSquare, badge: 1, path: "/user/messages" },
+    { label: "Applications", icon: FileText, path: "/user/application" },
+    { label: "Find Jobs", icon: Search, path: "/user/job" },
+    // { label: "Browse Companies", icon: Building2, path: "/user/companies" },
+    { label: "My Public Profile", icon: User, path: "/user/profile" },
   ];
 
   const settingsItems = [
@@ -106,7 +105,10 @@ export default function Layout({ children }) {
       >
         <div className="p-6 border-b border-purple-100 flex justify-between items-center my-4">
           <Image src="/logo.png" alt="Logo" width={216} height={40} />
-          <button className="md:hidden text-gray-700" onClick={() => setSidebarOpen(false)}>
+          <button
+            className="md:hidden text-gray-700"
+            onClick={() => setSidebarOpen(false)}
+          >
             <X size={24} />
           </button>
         </div>
@@ -195,7 +197,10 @@ export default function Layout({ children }) {
       <div className="md:ml-64">
         <header className="bg-white p-4 md:p-6 border-b flex justify-between items-center sticky top-0 z-10">
           <div className="flex items-center gap-4">
-            <button className="md:hidden text-gray-700" onClick={() => setSidebarOpen(true)}>
+            <button
+              className="md:hidden text-gray-700"
+              onClick={() => setSidebarOpen(true)}
+            >
               <Menu size={24} />
             </button>
             <h1 className="font-clash font-semibold text-2xl md:text-[32px] text-[#25324B] capitalize">
@@ -220,7 +225,8 @@ export default function Layout({ children }) {
           </div>
         </header>
 
-        <main className="h-[calc(100vh-80px)] overflow-y-auto bg-white">{children}</main>
+        {/* MAIN: Remove scroll, let JobList handle its own scroll */}
+        <main className="bg-white min-h-[calc(100vh-80px)]">{children}</main>
       </div>
     </div>
   );

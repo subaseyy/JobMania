@@ -1,40 +1,28 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { SquarePen } from "lucide-react";
-import { getProfile, updateProfile } from "@/lib/api/Auth";
 
-const AboutSection = () => {
+/**
+ * @param {object} props
+ * @param {string} props.about - The user's about text
+ * @param {function} props.onUpdate - Callback to update the about text (receives { about })
+ */
+const AboutSection = ({ about = "", onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [aboutText, setAboutText] = useState("");
-  const [tempAboutText, setTempAboutText] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [aboutText, setAboutText] = useState(about);
+  const [tempAboutText, setTempAboutText] = useState(about);
 
-  // Fetch profile on mount
+  // Keep state in sync with parent
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await getProfile();
-        const { profile } = res.data;
-        const about = profile.about || "";
-        setAboutText(about);
-        setTempAboutText(about);
-      } catch (err) {
-        console.error("Failed to fetch about section", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
+    setAboutText(about);
+    setTempAboutText(about);
+  }, [about]);
 
   const handleSave = async () => {
     try {
-      await updateProfile({ about: tempAboutText });
-      setAboutText(tempAboutText);
+      await onUpdate({ about: tempAboutText });
       setIsEditing(false);
     } catch (error) {
-      console.error("Failed to update about section", error);
       alert("Update failed. Please try again.");
     }
   };
@@ -47,10 +35,6 @@ const AboutSection = () => {
   const handleTextChange = (e) => {
     setTempAboutText(e.target.value);
   };
-
-  if (loading) {
-    return <div className="p-6">Loading About section...</div>;
-  }
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 border border-[#D6DDEB]">

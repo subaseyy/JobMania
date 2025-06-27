@@ -100,9 +100,9 @@ export default function JobList({
   }
 
   return (
-    <div className="col-span-3 flex flex-col min-h-[80vh]">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+    <div className="col-span-3 flex flex-col min-h-[80vh] h-full relative">
+      {/* Sticky Header */}
+      <div className="flex justify-between items-center mb-2 sticky top-0 z-10 bg-white py-4 border-b">
         <div>
           <h2 className="font-clash font-[600] text-[32px] leading-[120%] text-[#25324B] pb-1">
             All Jobs
@@ -111,7 +111,6 @@ export default function JobList({
             Showing {filteredJobs.length} results
           </p>
         </div>
-
         <div className="flex items-center space-x-4">
           <div className="font-epilogue font-[400] text-base leading-[160%] text-[#7C8493]">
             Sort by:{" "}
@@ -126,6 +125,7 @@ export default function JobList({
           </div>
           <div className="hidden sm:block h-[24px] w-[1px] bg-[#202430]/50" />
           <div className="hidden sm:flex justify-center items-center space-x-2 p-1 rounded-md">
+            {/* Grid view button */}
             <button
               className={`p-1 rounded ${
                 viewMode === "grid" ? "bg-white shadow-sm" : "hover:bg-white"
@@ -142,6 +142,7 @@ export default function JobList({
                 <path d="M4 4h4v4H4V4zm0 6h4v4H4v-4zm6-6h4v4h-4V4zm0 6h4v4h-4v-4z" />
               </svg>
             </button>
+            {/* List view button */}
             <button
               className={`p-1 rounded ${
                 viewMode === "list" ? "bg-white shadow-sm" : "hover:bg-white"
@@ -161,10 +162,9 @@ export default function JobList({
           </div>
         </div>
       </div>
-
-      {/* Job Grid/List */}
+      {/* Scrollable Jobs List Area */}
       <div
-        className={`flex-1 ${
+        className={`flex-1 overflow-y-auto ${
           viewMode === "grid"
             ? "grid grid-cols-1 md:grid-cols-2 gap-4"
             : "space-y-4"
@@ -202,7 +202,6 @@ export default function JobList({
           </div>
         )}
       </div>
-
       {/* Pagination */}
       {filteredJobs.length > jobsPerPage && (
         <div className="mt-6">

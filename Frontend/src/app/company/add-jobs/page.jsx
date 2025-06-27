@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Plus, CheckCircle } from "lucide-react";
+import { ArrowLeft, Plus, CheckCircle, X } from "lucide-react";
 import Cookies from "js-cookie";
 
 const API_URL = "http://localhost:5050/api";
@@ -18,13 +18,13 @@ export default function AddJobCompanyPage() {
     salaryMax: "",
     currency: "NPR",
     description: "",
-    requirements: "",
+    requirements: [""],
     isActive: true,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // Get company info
+  // Fetch company info
   useEffect(() => {
     async function fetchProfile() {
       try {
@@ -51,14 +51,49 @@ export default function AddJobCompanyPage() {
     fetchProfile();
   }, [router]);
 
+  // Handle form field changes (for non-array fields)
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({
       ...prev,
-      [name]: name === "isActive" ? value === "true" : value,
+      [name]:
+        name === "isActive"
+          ? value === "true"
+          : name === "salaryMin" || name === "salaryMax"
+          ? value.replace(/^0+/, "") // remove leading zeros
+          : value,
     }));
   };
 
+  // Handle requirements array changes
+  const handleRequirementChange = (index, value) => {
+    setForm((prev) => {
+      const updated = [...prev.requirements];
+      updated[index] = value;
+      return { ...prev, requirements: updated };
+    });
+  };
+
+  // Add new requirement field
+  const addRequirement = () => {
+    setForm((prev) => ({
+      ...prev,
+      requirements: [...prev.requirements, ""],
+    }));
+  };
+
+  // Remove a requirement field
+  const removeRequirement = (index) => {
+    setForm((prev) => ({
+      ...prev,
+      requirements:
+        prev.requirements.length === 1
+          ? prev.requirements
+          : prev.requirements.filter((_, i) => i !== index),
+    }));
+  };
+
+  // Submit handler
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -67,12 +102,9 @@ export default function AddJobCompanyPage() {
       const token = Cookies.get("token");
       const jobData = {
         ...form,
-        salaryMin: Number(form.salaryMin),
-        salaryMax: Number(form.salaryMax),
-        requirements: form.requirements
-          .split(",")
-          .map((r) => r.trim())
-          .filter(Boolean),
+        salaryMin: form.salaryMin === "" ? undefined : Number(form.salaryMin),
+        salaryMax: form.salaryMax === "" ? undefined : Number(form.salaryMax),
+        requirements: form.requirements.map((r) => r.trim()).filter(Boolean),
       };
 
       const res = await fetch(`${API_URL}/jobs/create`, {
@@ -145,25 +177,31 @@ export default function AddJobCompanyPage() {
             <option value="">Select Job Type</option>
             <option value="full-time">Full-time</option>
             <option value="part-time">Part-time</option>
+            <option value="internship">Internship</option>
+            <option value="contract">Contract</option>
             <option value="remote">Remote</option>
           </select>
 
-          <input
-            name="salaryMin"
-            type="number"
-            placeholder="Minimum Salary"
-            value={form.salaryMin}
-            onChange={handleChange}
-            className="w-full border rounded px-4 py-2"
-          />
-          <input
-            name="salaryMax"
-            type="number"
-            placeholder="Maximum Salary"
-            value={form.salaryMax}
-            onChange={handleChange}
-            className="w-full border rounded px-4 py-2"
-          />
+          <div className="flex gap-4">
+            <input
+              name="salaryMin"
+              type="number"
+              min="0"
+              placeholder="Minimum Salary"
+              value={form.salaryMin}
+              onChange={handleChange}
+              className="w-1/2 border rounded px-4 py-2"
+            />
+            <input
+              name="salaryMax"
+              type="number"
+              min="0"
+              placeholder="Maximum Salary"
+              value={form.salaryMax}
+              onChange={handleChange}
+              className="w-1/2 border rounded px-4 py-2"
+            />
+          </div>
 
           <select
             name="currency"
@@ -183,14 +221,42 @@ export default function AddJobCompanyPage() {
             onChange={handleChange}
             required
             className="w-full border rounded px-4 py-2"
+            rows={3}
           ></textarea>
-          <textarea
-            name="requirements"
-            placeholder="Comma-separated skills (e.g., HTML, CSS, JS)"
-            value={form.requirements}
-            onChange={handleChange}
-            className="w-full border rounded px-4 py-2"
-          ></textarea>
+
+          <div>
+            <label className="block mb-2 font-medium">
+              Requirements (add skills or responsibilities)
+            </label>
+            {form.requirements.map((req, idx) => (
+              <div className="flex gap-2 mb-2" key={idx}>
+                <input
+                  type="text"
+                  value={req}
+                  placeholder={`Requirement ${idx + 1}`}
+                  onChange={(e) => handleRequirementChange(idx, e.target.value)}
+                  className="border px-3 py-2 rounded w-full"
+                  required={idx === 0}
+                />
+                <button
+                  type="button"
+                  className="text-red-500 px-2"
+                  onClick={() => removeRequirement(idx)}
+                  disabled={form.requirements.length === 1}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addRequirement}
+              className="text-blue-600 text-xs"
+            >
+              + Add requirement
+            </button>
+          </div>
+
           <select
             name="isActive"
             value={form.isActive ? "true" : "false"}

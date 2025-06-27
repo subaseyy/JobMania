@@ -29,14 +29,14 @@ router.put(
 );
 
 
-router.get("/admin/profiles", protect, authorize("admin"), getAllProfiles);
+router.get("/admin/profiles", protect, authorize("admin","company"), getAllProfiles);
 
-router.get("/admin/profile/:id", protect, authorize("admin"), getProfileById);
+router.get("/admin/profile/:id", protect, authorize("admin","company"), getProfileById);
 
 router.put(
   "/admin/profile/:id",
   protect,
-  authorize("admin"),
+  authorize("admin","company"),
   upload.fields([
     { name: "profile_picture", maxCount: 1 },
     { name: "bg_image", maxCount: 1 },
@@ -45,8 +45,8 @@ router.put(
   updateProfileById
 );
 
-router.delete("/admin/profile/:id", protect, authorize("admin"), deleteProfileById);
-router.post("/admin/profile/", protect, authorize("admin"), createUserByAdmin);
-router.put("/admin/user/:id", protect, authorize("admin"), updateUserById);
+router.delete("/admin/profile/:id", protect, authorize("admin","company"), deleteProfileById);
+router.post("/admin/profile/", protect, authorize("admin","company"), createUserByAdmin);
+router.put("/admin/user/:id", protect, authorize("admin","company"), updateUserById);
 
 module.exports = router;

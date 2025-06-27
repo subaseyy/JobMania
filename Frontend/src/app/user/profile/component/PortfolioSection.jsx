@@ -10,8 +10,8 @@ const PortfolioSection = () => {
   const fileInputRef = useRef(null);
 
   const [portfolioItems, setPortfolioItems] = useState([]);
+  const [editingId, setEditingId] = useState(null); // null or an ID or "new"
   const [showAddForm, setShowAddForm] = useState(false);
-  const [editingId, setEditingId] = useState(null);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -22,7 +22,7 @@ const PortfolioSection = () => {
     imageFile: null,
   });
 
-  // Fetch initial data
+  // Fetch portfolio items on mount
   useEffect(() => {
     const fetchPortfolios = async () => {
       try {
@@ -38,25 +38,25 @@ const PortfolioSection = () => {
     fetchPortfolios();
   }, []);
 
-  // Scroll progress
+  // Horizontal scroll bar progress
   useEffect(() => {
     const scrollContainer = scrollRef.current;
     if (!scrollContainer) return;
-
     const handleScroll = () => {
       const scrollLeft = scrollContainer.scrollLeft;
-      const scrollWidth = scrollContainer.scrollWidth - scrollContainer.clientWidth;
+      const scrollWidth =
+        scrollContainer.scrollWidth - scrollContainer.clientWidth;
       const progress = scrollWidth > 0 ? (scrollLeft / scrollWidth) * 100 : 0;
       setScrollProgress(progress);
     };
-
     scrollContainer.addEventListener("scroll", handleScroll);
     return () => scrollContainer.removeEventListener("scroll", handleScroll);
   }, [portfolioItems]);
 
-  // File input trigger
+  // Trigger file input click
   const triggerFileInput = () => fileInputRef.current.click();
 
+  // Form data handlers
   const handleInputChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -67,41 +67,53 @@ const PortfolioSection = () => {
     }
   };
 
+  // Open form to add
   const startAdd = () => {
     setFormData({ id: null, title: "", image: "", imageFile: null });
     setEditingId("new");
     setShowAddForm(true);
   };
 
+  // Open form to edit
   const startEdit = (item) => {
-    setFormData({ id: item.id, title: item.title, image: item.image, imageFile: null });
+    setFormData({
+      id: item.id,
+      title: item.title,
+      image: item.image,
+      imageFile: null,
+    });
     setEditingId(item.id);
+    setShowAddForm(true);
   };
 
+  // Cancel add/edit
   const cancelEdit = () => {
     setEditingId(null);
     setShowAddForm(false);
+    setFormData({ id: null, title: "", image: "", imageFile: null });
   };
 
+  // Uploads an image and returns the saved path
   const uploadImage = async (file) => {
     const form = new FormData();
     form.append("file", file);
-
     const res = await axios.post("/api/uploads", form);
-    return res.data.path; // Ensure your backend returns { path: '/uploads/image.jpg' }
+    return res.data.path;
   };
 
+  // Save a new or edited portfolio item
   const savePortfolio = async () => {
     if (!formData.title) return;
-
     let imagePath = formData.image;
 
+    // Upload file if user selected one
     if (formData.imageFile) {
       try {
         imagePath = await uploadImage(formData.imageFile);
       } catch (err) {
         console.error("Image upload failed", err);
-        return alert("Image upload failed");
+        alert("Image upload failed");
+        return;
       }
     }
 
@@ -130,6 +142,7 @@ const PortfolioSection = () => {
     }
   };
 
+  // Delete a portfolio item
   const deletePortfolio = async (id) => {
     const updated = portfolioItems.filter((item) => item.id !== id);
     try {
@@ -156,7 +169,8 @@ const PortfolioSection = () => {
         </button>
       </div>
 
-      {(editingId === "new" || editingId !== null) && (
+      {/* Add/Edit Modal */}
+      {showAddForm && (
         <div className="mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
           <div className="grid grid-cols-1 gap-3">
             <input
@@ -166,8 +180,6 @@ const PortfolioSection = () => {
               placeholder="Project title"
               className="w-full p-2 border rounded"
             />
-
-            {/* Image upload */}
             <div className="flex items-center gap-3">
               <input
                 type="file"
@@ -183,7 +195,8 @@ const PortfolioSection = () => {
               >
                 Upload Image
               </button>
-              {(formData.image || formData.imageFile) && (
+              {/* Show preview */}
+              {(formData.imageFile || formData.image) && (
                 <div className="flex items-center gap-2">
                   <div className="w-10 h-10 relative">
                     <Image
@@ -203,7 +216,6 @@ const PortfolioSection = () => {
                 </div>
               )}
             </div>
-
             <div className="flex gap-2">
               <button
                 onClick={savePortfolio}
@@ -231,6 +243,7 @@ const PortfolioSection = () => {
         </div>
       )}
 
+      {/* Portfolio List with Horizontal Scroll */}
       <div ref={scrollRef} className="overflow-x-auto">
         <div className="flex space-x-4 min-w-max pb-2">
           {portfolioItems.map((item) => (
@@ -265,7 +278,6 @@ const PortfolioSection = () => {
           ))}
         </div>
       </div>
-
       <div className="mt-2 w-full h-[3px] bg-gray-200 rounded">
         <div
           className="h-full bg-[#4640DE] rounded transition-all duration-200"

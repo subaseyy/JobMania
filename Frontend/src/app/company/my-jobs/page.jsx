@@ -18,7 +18,18 @@ export default function MyJobs({
 
   // Edit modal states
   const [editingJob, setEditingJob] = useState(null);
-  const [editForm, setEditForm] = useState({ title: "", location: "" });
+  const [editForm, setEditForm] = useState({
+    title: "",
+    location: "",
+    description: "",
+    type: "full-time",
+    company: "",
+    salaryMin: "",
+    salaryMax: "",
+    currency: "NPR",
+    requirements: [""],
+    isActive: true,
+  });
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState("");
 
@@ -50,13 +61,33 @@ export default function MyJobs({
     fetchJobs();
   }, [token]);
 
+  // Prevent background scroll when modal open
+  useEffect(() => {
+    if (editingJob) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    // On component unmount, clean up (safety)
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [editingJob]);
+
   // --- Edit function ---
   const onEdit = (job) => {
     setEditingJob(job);
     setEditForm({
       title: job.title || "",
       location: job.location || "",
-      // add more fields as needed
+      description: job.description || "",
+      type: job.type || "full-time",
+      company: job.company || "",
+      salaryMin: job.salaryMin ?? "",
+      salaryMax: job.salaryMax ?? "",
+      currency: job.currency || "NPR",
+      requirements: job.requirements?.length ? [...job.requirements] : [""],
+      isActive: job.isActive ?? true,
     });
     setEditError("");
   };
@@ -85,6 +116,8 @@ export default function MyJobs({
       setFetchLoading(false);
     }
   };
+
+  // --- Status toggle ---
   const handleToggleStatus = async (job) => {
     const jobId = job._id?.$oid || job._id;
     const newStatus = !job.isActive;
@@ -141,7 +174,7 @@ export default function MyJobs({
   // --- Edit Modal JSX ---
   const EditModal = editingJob && (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-40">
-      <div className="bg-white p-6 rounded-xl w-full max-w-md shadow-lg relative">
+      <div className="bg-white p-6 rounded-xl w-full max-w-md shadow-lg relative max-h-[90vh] overflow-y-auto">
         <button
           className="absolute top-2 right-2 text-gray-400 hover:text-gray-700"
           onClick={() => setEditingJob(null)}
@@ -154,6 +187,8 @@ export default function MyJobs({
             {editError}
           </div>
         )}
+
+        {/* Title */}
         <input
           type="text"
           placeholder="Title"
@@ -162,7 +197,22 @@ export default function MyJobs({
             setEditForm((f) => ({ ...f, title: e.target.value }))
           }
           className="border mb-2 px-3 py-2 rounded w-full"
+          required
         />
+
+        {/* Company */}
+        <input
+          type="text"
+          placeholder="Company"
+          value={editForm.company}
+          onChange={(e) =>
+            setEditForm((f) => ({ ...f, company: e.target.value }))
+          }
+          className="border mb-2 px-3 py-2 rounded w-full"
+          required
+        />
+
+        {/* Location */}
         <input
           type="text"
           placeholder="Location"
@@ -170,10 +220,129 @@ export default function MyJobs({
           onChange={(e) =>
             setEditForm((f) => ({ ...f, location: e.target.value }))
           }
-          className="border mb-4 px-3 py-2 rounded w-full"
+          className="border mb-2 px-3 py-2 rounded w-full"
+          required
         />
-        {/* Add more fields as needed */}
-        <div className="flex justify-end space-x-2">
+
+        {/* Type */}
+        <select
+          value={editForm.type}
+          onChange={(e) => setEditForm((f) => ({ ...f, type: e.target.value }))}
+          className="border mb-2 px-3 py-2 rounded w-full"
+          required
+        >
+          <option value="full-time">Full-time</option>
+          <option value="part-time">Part-time</option>
+          <option value="internship">Internship</option>
+          <option value="contract">Contract</option>
+          <option value="remote">Remote</option>
+        </select>
+
+        {/* Status */}
+        <label className="flex items-center mb-2 space-x-2">
+          <input
+            type="checkbox"
+            checked={editForm.isActive}
+            onChange={(e) =>
+              setEditForm((f) => ({ ...f, isActive: e.target.checked }))
+            }
+          />
+          <span>Active</span>
+        </label>
+
+        {/* Salary Range */}
+        <div className="flex gap-2 mb-2">
+          <input
+            type="number"
+            placeholder="Salary Min"
+            value={editForm.salaryMin}
+            onChange={(e) =>
+              setEditForm((f) => ({ ...f, salaryMin: e.target.value }))
+            }
+            className="border px-3 py-2 rounded w-1/2"
+          />
+          <input
+            type="number"
+            placeholder="Salary Max"
+            value={editForm.salaryMax}
+            onChange={(e) =>
+              setEditForm((f) => ({ ...f, salaryMax: e.target.value }))
+            }
+            className="border px-3 py-2 rounded w-1/2"
+          />
+        </div>
+
+        {/* Currency */}
+        <input
+          type="text"
+          placeholder="Currency"
+          value={editForm.currency}
+          onChange={(e) =>
+            setEditForm((f) => ({ ...f, currency: e.target.value }))
+          }
+          className="border mb-2 px-3 py-2 rounded w-full"
+        />
+
+        {/* Description */}
+        <textarea
+          placeholder="Description"
+          value={editForm.description}
+          onChange={(e) =>
+            setEditForm((f) => ({ ...f, description: e.target.value }))
+          }
+          className="border mb-2 px-3 py-2 rounded w-full"
+          rows={3}
+          required
+        />
+
+        {/* Requirements */}
+        <div className="mb-2">
+          <label className="block font-medium text-sm mb-1">Requirements</label>
+          {editForm.requirements.map((req, idx) => (
+            <div className="flex mb-1 gap-2" key={idx}>
+              <input
+                type="text"
+                value={req}
+                onChange={(e) =>
+                  setEditForm((f) => {
+                    const updated = [...f.requirements];
+                    updated[idx] = e.target.value;
+                    return { ...f, requirements: updated };
+                  })
+                }
+                className="border px-2 py-1 rounded w-full"
+              />
+              <button
+                type="button"
+                className="text-red-500 px-2"
+                disabled={editForm.requirements.length <= 1}
+                onClick={() =>
+                  setEditForm((f) => ({
+                    ...f,
+                    requirements: f.requirements.filter((_, i) => i !== idx),
+                  }))
+                }
+              >
+                X
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            className="text-blue-600 text-xs mt-1"
+            onClick={() =>
+              setEditForm((f) => ({
+                ...f,
+                requirements: [...f.requirements, ""],
+              }))
+            }
+          >
+            + Add requirement
+          </button>
+        </div>
+
+        {/* Buttons */}
+        <div className="flex justify-end space-x-2 mt-4">
           <button
             className="bg-gray-200 px-4 py-2 rounded"
             onClick={() => setEditingJob(null)}
@@ -189,13 +358,25 @@ export default function MyJobs({
               setEditError("");
               try {
                 const jobId = editingJob._id?.$oid || editingJob._id;
+                // Convert salary fields to numbers if not empty string
+                const updatedForm = {
+                  ...editForm,
+                  salaryMin:
+                    editForm.salaryMin === ""
+                      ? undefined
+                      : Number(editForm.salaryMin),
+                  salaryMax:
+                    editForm.salaryMax === ""
+                      ? undefined
+                      : Number(editForm.salaryMax),
+                };
                 const res = await fetch(`${API_URL}/jobs/admin/jobs/${jobId}`, {
                   method: "PUT",
                   headers: {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`,
                   },
-                  body: JSON.stringify(editForm),
+                  body: JSON.stringify(updatedForm),
                 });
                 const data = await res.json();
                 if (res.ok) {
@@ -252,97 +433,128 @@ export default function MyJobs({
         </div>
       )}
 
-      <div className="hidden sm:block bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto max-w-full">
-          <table className="w-full min-w-[600px]">
-            <thead className="bg-gray-50 sticky top-0 z-10">
+      <div className="hidden sm:block bg-white rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
+        <table className="w-full min-w-[1200px]">
+          <thead className="bg-gray-50 sticky top-0 z-10">
+            <tr>
+              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                Title
+              </th>
+              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                Company
+              </th>
+              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                Location
+              </th>
+              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                Type
+              </th>
+              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                Salary Range
+              </th>
+              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                Currency
+              </th>
+              {/* <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                Description
+              </th>
+              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                Requirements
+              </th> */}
+              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                Status
+              </th>
+              <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {isLoading ? (
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Title
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Location
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Type
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
+                <td colSpan={10} className="text-center py-8 text-gray-500">
+                  Loading...
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={5} className="text-center py-8 text-gray-500">
-                    Loading...
+            ) : paginatedJobs.length === 0 ? (
+              <tr>
+                <td colSpan={10} className="text-center py-8 text-gray-500">
+                  No jobs posted yet.
+                </td>
+              </tr>
+            ) : (
+              paginatedJobs.map((job) => (
+                <tr
+                  key={job._id?.$oid || job._id || Math.random()}
+                  className="hover:bg-gray-50 transition-colors"
+                >
+                  <td className="px-3 py-4 whitespace-nowrap font-medium text-gray-900">
+                    {job.title}
                   </td>
-                </tr>
-              ) : paginatedJobs.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="text-center py-8 text-gray-500">
-                    No jobs posted yet.
+                  <td className="px-3 py-4 whitespace-nowrap text-gray-600">
+                    {job.company}
                   </td>
-                </tr>
-              ) : (
-                paginatedJobs.map((job) => (
-                  <tr
-                    key={job._id?.$oid || job._id || Math.random()}
-                    className="hover:bg-gray-50 transition-colors"
+                  <td className="px-3 py-4 whitespace-nowrap text-gray-600">
+                    {job.location}
+                  </td>
+                  <td className="px-3 py-4 whitespace-nowrap">
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      {job.type}
+                    </span>
+                  </td>
+                  <td className="px-3 py-4 whitespace-nowrap text-gray-700">
+                    {job.salaryMin ?? "-"} – {job.salaryMax ?? "-"}
+                  </td>
+                  <td className="px-3 py-4 whitespace-nowrap text-gray-700">
+                    {job.currency || "-"}
+                  </td>
+                  {/* <td
+                    className="px-3 py-4 whitespace-nowrap text-gray-700 max-w-xs truncate"
+                    title={job.description}
                   >
-                    <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
-                      {job.title}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                      {job.location}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {job.type}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    {job.description}
+                  </td>
+                  <td
+                    className="px-3 py-4 whitespace-nowrap text-gray-700 max-w-xs truncate"
+                    title={job.requirements?.join(", ")}
+                  >
+                    {job.requirements?.join(", ") || "-"}
+                  </td> */}
+                  <td className="px-3 py-4 whitespace-nowrap">
+                    <button
+                      className={`px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${
+                        job.isActive
+                          ? "bg-green-100 text-green-800 hover:bg-green-200"
+                          : "bg-red-100 text-red-800 hover:bg-red-200"
+                      }`}
+                      onClick={() => handleToggleStatus(job)}
+                      disabled={fetchLoading}
+                      title={`Mark as ${job.isActive ? "Inactive" : "Active"}`}
+                    >
+                      {job.isActive ? "Active" : "Inactive"}
+                    </button>
+                  </td>
+                  <td className="px-3 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div className="flex justify-end space-x-4">
                       <button
-                        className={`px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${
-                          job.isActive
-                            ? "bg-green-100 text-green-800 hover:bg-green-200"
-                            : "bg-red-100 text-red-800 hover:bg-red-200"
-                        }`}
-                        onClick={() => handleToggleStatus(job)}
-                        disabled={fetchLoading}
-                        title={`Mark as ${
-                          job.isActive ? "Inactive" : "Active"
-                        }`}
+                        onClick={() => onEdit(job)}
+                        className="text-[#4640DE] hover:text-[#3a35c7] flex items-center"
                       >
-                        {job.isActive ? "Active" : "Inactive"}
+                        <Edit className="mr-1 h-4 w-4" /> Edit
                       </button>
-                    </td>
-
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex justify-end space-x-6">
-                        <button
-                          onClick={() => onEdit(job)}
-                          className="text-[#4640DE] hover:text-[#3a35c7] flex items-center"
-                        >
-                          <Edit className="mr-1 h-4 w-4" /> Edit
-                        </button>
-                        <button
-                          onClick={() => onDelete(job._id?.$oid || job._id)}
-                          className="text-red-600 hover:text-red-800 flex items-center"
-                        >
-                          <Trash2 className="mr-1 h-4 w-4" /> Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                      <button
+                        onClick={() => onDelete(job._id?.$oid || job._id)}
+                        className="text-red-600 hover:text-red-800 flex items-center"
+                      >
+                        <Trash2 className="mr-1 h-4 w-4" /> Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
 
       <div className="block sm:hidden">

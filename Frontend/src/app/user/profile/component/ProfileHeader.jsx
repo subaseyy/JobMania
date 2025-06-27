@@ -1,83 +1,53 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import { MapPin, Flag, SquarePen } from "lucide-react";
-import { getProfile, updateProfile } from "@/lib/api/Auth";
-import Cookies from "js-cookie";
 
-const ProfileHeader = () => {
+const ProfileHeader = ({ user = {}, profile = {}, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [profile, setProfile] = useState(null);
-  const [tempProfile, setTempProfile] = useState(null);
+  const [tempProfile, setTempProfile] = useState({
+    name: "",
+    title: "",
+    company: "",
+    location: "",
+    profile_picture: "",
+    bg_image: "",
+  });
   const [bgImage, setBgImage] = useState("/profile/bg.png");
   const fileInputRef = useRef(null);
 
+  // Sync profile/user to local state when they change
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await getProfile();
-        const { profile: p, user } = res.data;
-
-        const formattedProfile = {
-          name: p.full_name || user.name || "",
-          title: p.title || "",
-          company: p.company || "",
-          location: p.location || "",
-          profile_picture: p.profile_picture || "",
-          bg_image: p.bg_image || "",
-        };
-
-        setProfile(formattedProfile);
-        setTempProfile(formattedProfile);
-        setBgImage(
-          formattedProfile.bg_image
-            ? `${process.env.NEXT_PUBLIC_BASE_URL}${formattedProfile.bg_image}`
-            : "/profile/bg.png"
-        );
-      } catch (err) {
-        console.error("Failed to load profile header", err);
-      }
+    const formatted = {
+      name: profile.full_name || user.full_name || user.name || "",
+      title: profile.title || "",
+      company: profile.company || "",
+      location: profile.location || "",
+      profile_picture: profile.profile_picture || "",
+      bg_image: profile.bg_image || "",
     };
-
-    fetchData();
-  }, []);
+    setTempProfile(formatted);
+    setBgImage(
+      formatted.bg_image
+        ? `${process.env.NEXT_PUBLIC_BASE_URL || ""}${formatted.bg_image}`
+        : "/profile/bg.png"
+    );
+  }, [profile, user]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setTempProfile({ ...tempProfile, [name]: value });
+    setTempProfile((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSaveChanges = async () => {
     try {
-      const updatePayload = {
+      await onUpdate({
         full_name: tempProfile.name,
         title: tempProfile.title,
         company: tempProfile.company,
         location: tempProfile.location,
-        // Don't need to pass bg_image here if it's already updated separately
-      };
-
-      const updated = await updateProfile(updatePayload);
-      const { profile: updatedProfile, user } = updated.data;
-
-      const formatted = {
-        name: updatedProfile.full_name || user.name || "",
-        title: updatedProfile.title || "",
-        company: updatedProfile.company || "",
-        location: updatedProfile.location || "",
-        profile_picture: updatedProfile.profile_picture || "",
-        bg_image: updatedProfile.bg_image || "",
-      };
-
-      setProfile(formatted);
-      setTempProfile(formatted);
-      setBgImage(
-        formatted.bg_image
-          ? `${process.env.NEXT_PUBLIC_BASE_URL}${formatted.bg_image}`
-          : "/profile/bg.png"
-      );
+      });
       setIsEditing(false);
-    } catch (err) {
-      console.error("Error updating profile:", err);
+    } catch {
       alert("Failed to save changes.");
     }
   };
@@ -88,37 +58,28 @@ const ProfileHeader = () => {
 
     const reader = new FileReader();
     reader.onloadend = () => {
-      setBgImage(reader.result); // for preview
+      setBgImage(reader.result); // preview
     };
     reader.readAsDataURL(file);
 
+    // Send background to backend
     const formData = new FormData();
     formData.append("bg_image", file);
-
     try {
-      const updated = await updateProfile(formData);
-      const { bg_image } = updated.data.profile;
-
-      setBgImage(
-        bg_image
-          ? `${process.env.NEXT_PUBLIC_BASE_URL}${bg_image}`
-          : "/profile/bg.png"
-      );
-    } catch (err) {
-      console.error("Failed to update background image", err);
+      await onUpdate(formData);
+    } catch {
       alert("Failed to update background image.");
     }
 
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const triggerFileInput = () => {
     fileInputRef.current?.click();
   };
 
-  if (!profile) {
+  // If loading is handled by parent, just check for no profile/user
+  if (!profile && !user) {
     return <div className="p-6">Loading profile header...</div>;
   }
 
@@ -155,8 +116,10 @@ const ProfileHeader = () => {
           <div className="md:absolute -top-20 left-6">
             <img
               src={
-                profile.profile_picture
-                  ? `${process.env.NEXT_PUBLIC_BASE_URL}${profile.profile_picture}`
+                tempProfile.profile_picture
+                  ? `${process.env.NEXT_PUBLIC_BASE_URL || ""}${
+                      tempProfile.profile_picture
+                    }`
                   : "/default-avatar.png"
               }
               alt="Profile"
@@ -202,17 +165,17 @@ const ProfileHeader = () => {
                 ) : (
                   <>
                     <h1 className="font-clash font-[600] text-2xl text-[#25324B] mb-1">
-                      {profile.name}
+                      {tempProfile.name}
                     </h1>
                     <p className="font-epilogue font-[400] text-lg text-[#7C8493] mb-2">
-                      {profile.title} at{" "}
+                      {tempProfile.title} at{" "}
                       <span className="font-[500] text-[#25324B]">
-                        {profile.company}
+                        {tempProfile.company}
                       </span>
                     </p>
                     <p className="font-epilogue font-[400] text-lg text-[#7C8493] mb-3 flex gap-2 items-center">
                       <MapPin strokeWidth={2} />
-                      <span>{profile.location}</span>
+                      <span>{tempProfile.location}</span>
                     </p>
                   </>
                 )}
@@ -238,7 +201,6 @@ const ProfileHeader = () => {
                     <button
                       onClick={() => {
                         setIsEditing(false);
-                        setTempProfile(profile);
                       }}
                       className="px-6 py-3 font-epilogue font-[700] text-base text-[#4640DE] border border-[#CCCCF5] hover:bg-[#f0f0ff] rounded"
                     >

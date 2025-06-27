@@ -3,17 +3,18 @@ import React, { useEffect, useRef, useState } from "react";
 import { Plus, SquarePen, Trash2, X } from "lucide-react";
 import { getProfile, updateProfile } from "@/lib/api/Auth";
 
+// Modal dialog for add/edit
 const Modal = ({ isOpen, onClose, children }) => {
   if (!isOpen) return null;
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
+      onClick={e => e.target === e.currentTarget && onClose()}
     >
       <div
         className="bg-white p-6 rounded-lg w-full max-w-2xl shadow-lg relative"
-        onClick={(e) => e.stopPropagation()}
+        onClick={e => e.stopPropagation()}
       >
         <button
           onClick={onClose}
@@ -62,10 +63,12 @@ const ExperienceSection = () => {
     fetchExperiences();
   }, []);
 
+  // Handle input changes
   const handleInputChange = (e) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
   };
 
+  // Handle logo file selection
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -77,6 +80,7 @@ const ExperienceSection = () => {
     }
   };
 
+  // Open modal for new experience
   const openAddModal = () => {
     setForm({
       company: "",
@@ -92,11 +96,13 @@ const ExperienceSection = () => {
     setEditingIndex("new");
   };
 
+  // Open modal for edit
   const openEditModal = (exp, index) => {
     setForm({ ...exp, logoFile: null });
     setEditingIndex(index);
   };
 
+  // Cancel modal
   const cancelEdit = () => {
     setForm({
       company: "",
@@ -112,6 +118,7 @@ const ExperienceSection = () => {
     setEditingIndex(null);
   };
 
+  // Save experience (add or update)
   const saveExperience = async () => {
     try {
       const updated = [...experiences];
@@ -133,6 +140,7 @@ const ExperienceSection = () => {
     }
   };
 
+  // Delete an experience
   const deleteExperience = async (index) => {
     try {
       const updated = experiences.filter((_, i) => i !== index);
@@ -145,6 +153,7 @@ const ExperienceSection = () => {
     }
   };
 
+  // For show less/more UX
   const visibleExperiences = showAll ? experiences : experiences.slice(0, 2);
 
   if (loading) return <div className="p-6">Loading experiences...</div>;
