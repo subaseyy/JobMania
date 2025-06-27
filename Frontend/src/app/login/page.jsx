@@ -33,7 +33,8 @@ export default function Login() {
 
       await new Promise((resolve) => setTimeout(resolve, 50));
 
-      router.push("/home");
+      router.push("/");
+      router.refresh();    
     } catch (error) {
       // console.error("Login failed:", error.message);
       setError(error.message || "Login failed. Please try again.");
