@@ -20,9 +20,24 @@ connectDB();
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Routes
-app.use(cors({ origin: "http://localhost:3000", credentials: true }));
-app.use(cors({ origin: "https://jobmania.subas.info.np", credentials: true }));
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://jobmania.subas.info.np",
+  "https://www.jobmania.subas.info.np",
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+  })
+);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
