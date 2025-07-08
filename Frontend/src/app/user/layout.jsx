@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import NotificationSystem from "./notification/page";
+
 import { AuthContext } from "@/context/AuthContext";
 import Cookies from "js-cookie";
 
