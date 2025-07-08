@@ -3,7 +3,7 @@ import Cookies from "js-cookie";
 
 export async function login({ email, password, userType }) {
   try {
-    const response = await fetch(`${NEXT_PUBLIC_API_BASE_URL}/auth/login`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -27,7 +27,7 @@ export async function login({ email, password, userType }) {
 
 export async function register({ full_name, email, password, role }) {
   try {
-    const response = await fetch(`${NEXT_PUBLIC_API_BASE_URL}/auth/signup`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/signup`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
