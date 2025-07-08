@@ -16,7 +16,7 @@ export default function CompanyApplicationsPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const API_URL = "http://localhost:5050/api";
+  const API_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api`;
   const token = Cookies.get("token");
 
   // Fetch company jobs
@@ -281,7 +281,7 @@ export default function CompanyApplicationsPage() {
                   <td className="px-4 py-2">
                     {app.resume && app.resume !== "no_resume" ? (
                       <a
-                        href={`http://localhost:5050${app.resume}`}
+                        href={`${process.env.NEXT_PUBLIC_API_BASE_URL}${app.resume}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-600 underline font-epilogue"

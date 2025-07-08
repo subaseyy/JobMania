@@ -24,7 +24,7 @@ export default function AllJobsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 25;
 
-  const API_URL = "http://localhost:5050/api";
+const API_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api`;
   const token = Cookies.get("token");
 
   useEffect(() => {

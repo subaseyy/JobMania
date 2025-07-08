@@ -57,7 +57,7 @@ export default function Application() {
 
       try {
         const res = await fetch(
-          "http://localhost:5050/api/jobApplications/my-applications",
+          `/api/jobApplications/my-applications`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
