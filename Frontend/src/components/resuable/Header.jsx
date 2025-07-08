@@ -64,7 +64,7 @@ const Header = () => {
         <div className="flex flex-wrap gap-4 sm:gap-8 items-center">
           <Link href="/">
             <Image
-              src="/home/Header/logo.png"
+              src="/home/header/logo.png"
               width={160}
               height={36}
               alt="Logo"

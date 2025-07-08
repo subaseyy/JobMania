@@ -21,7 +21,7 @@ const Hero = () => {
               5000+ Jobs
               <div className="pt-1">
                 <Image
-                  src="/home/Hero/underline.svg"
+                  src="/home/hero/underline.svg"
                   alt="underline"
                   width={455}
                   height={39}

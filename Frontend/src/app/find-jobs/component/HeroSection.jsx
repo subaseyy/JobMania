@@ -16,7 +16,7 @@ export default function HeroSection({
           <span className="relative">
             <span className="text-[#26A4FF] z-10 relative">dream job</span>
             <Image
-              src="/home/Hero/underline.svg"
+              src="/home/hero/underline.svg"
               alt="underline"
               width={355}
               height={39}
