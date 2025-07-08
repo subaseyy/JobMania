@@ -53,7 +53,7 @@ export default function JobList({
         jobsToCheck.map(async (job) => {
           try {
             const res = await fetch(
-              `http://localhost:5050/api/jobApplications/${job._id}/check-applied`,
+              `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/jobApplications/${job._id}/check-applied`,
               {
                 method: "GET",
                 credentials: "include",
@@ -82,7 +82,7 @@ export default function JobList({
     const token = getCookie("token");
     try {
       const res = await fetch(
-        `http://localhost:5050/api/jobApplications/${jobId}/check-applied`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/jobApplications/${jobId}/check-applied`,
         {
           method: "GET",
           credentials: "include",

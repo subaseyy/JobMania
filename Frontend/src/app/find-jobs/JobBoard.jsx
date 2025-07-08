@@ -26,7 +26,7 @@ export default function JobBoard() {
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const res = await fetch("http://localhost:5050/api/jobs/jobs");
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/jobs/jobs`);
         const data = await res.json();
         if (res.ok) {
           setAllJobs(data.data);

@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Plus, CheckCircle } from "lucide-react";
 import Cookies from "js-cookie";
 
-const API_URL = "http://localhost:5050/api";
+const API_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api`;
 
 export default function AddJobPage() {
   const router = useRouter();

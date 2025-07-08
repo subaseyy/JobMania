@@ -8,7 +8,7 @@ import DailyStatsChart from "./components/DailyStatsChart";
 import RecentJobPosts from "./components/RecentJobPosts";
 import RecentApplications from "./components/RecentApplications";
 
-const API = "http://localhost:5050/api";
+const API = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api`;
 
 export default function EmployerDashboard() {
   const [jobs, setJobs] = useState([]);

@@ -5,7 +5,7 @@ import Cookies from "js-cookie";
 export default function RecentApplications() {
   const [applications, setApplications] = useState([]);
   const token = Cookies.get("token");
-  const API = "http://localhost:5050/api";
+  const API = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api`;
 
   useEffect(() => {
     const fetchApplications = async () => {

@@ -17,7 +17,7 @@ const getTokenFromCookie = () => {
   return null;
 };
 
-const BASE_API_URL = "http://localhost:5050/api";
+const BASE_API_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api`;
 
 export default function DashboardOverview() {
   const [dateRange, setDateRange] = useState([

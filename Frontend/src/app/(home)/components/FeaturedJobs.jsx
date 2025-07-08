@@ -6,6 +6,7 @@ import Image from "next/image";
 import { MapPin, ChevronRight } from "lucide-react";
 import axios from "axios";
 
+
 const FeaturedJobs = () => {
   const [jobs, setJobs] = useState([]);
   const router = useRouter();
@@ -13,7 +14,7 @@ const FeaturedJobs = () => {
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const res = await axios.get("http://localhost:5050/api/jobs/jobs");
+        const res = await axios.get(`${NEXT_PUBLIC_API_BASE_URL}/jobs/jobs`);
         setJobs(res.data.data || []);
       } catch (err) {
         console.error("Failed to fetch jobs:", err);

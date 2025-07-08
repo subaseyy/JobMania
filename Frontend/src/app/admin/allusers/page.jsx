@@ -4,7 +4,7 @@ import { Edit, Trash2, Users, X, CheckCircle } from "lucide-react";
 import UserCard from "./UserCard";
 import { getTokenFromCookies } from "../utils/auth";
 
-const API_URL = "http://localhost:5050/api";
+const API_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api`;
 
 export default function AllUsersPage() {
   const [users, setUsers] = useState([]);

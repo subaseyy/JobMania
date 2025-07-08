@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, UserPlus, CheckCircle } from "lucide-react";
 import { getTokenFromCookies } from "../../utils/auth";
 
-const API_URL = "http://localhost:5050/api"; // Change to your backend URL
+const API_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api`; // Change to your backend URL
 
 export default function AddUserPage() {
   const router = useRouter();
