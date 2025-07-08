@@ -1,3 +1,6 @@
+export const dynamic = "force-dynamic"; // 💥 Add this line at the top
+
+
 import React from "react";
 import Hero from "./components/Hero";
 import Logo from "./components/Logo";

@@ -1,0 +1,47 @@
+version: '3.9'
+
+services:
+  mongo:
+    image: mongo:6
+    container_name: jobmania_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  backend:
+    build:
+      context: ./Backend
+    container_name: jobmania_backend
+    ports:
+      - "5050:5050"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/jobmania
+      - JWT_SECRET=this_is_secret_key
+      - DB_URL=mongodb://mongo:27017/JobMania
+      - PORT=5050
+      - EMAIL_USER=noreply@subask.com.np
+      - EMAIL_PASS=Subas@12345
+    volumes:
+      - ./Backend:/app
+      - /app/node_modules
+    depends_on:
+      - mongo
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: jobmania_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_BASE_URL=http://localhost:5050
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    command: npm start # or `npm start` if you're using a production server like next start
+
+volumes:
+  mongo_data:
