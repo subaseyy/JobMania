@@ -41,7 +41,7 @@ export default function Login() {
     }
   };
   const handleGoogleLogin = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login/google-oauth2/`;
+    window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/login/google-oauth2/`;
   };
 
   return (

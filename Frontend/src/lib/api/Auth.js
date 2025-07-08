@@ -3,7 +3,7 @@ import Cookies from "js-cookie";
 
 export async function login({ email, password, userType }) {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -27,7 +27,7 @@ export async function login({ email, password, userType }) {
 
 export async function register({ full_name, email, password, role }) {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/signup`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/signup`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -54,7 +54,7 @@ export async function register({ full_name, email, password, role }) {
 
 export async function sendOtp({ email }) {
   try {
-    const response = await fetch(`${API_BASE}/auth/otp/`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/otp/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -73,7 +73,7 @@ export async function sendOtp({ email }) {
 
 export async function verifyOtp({ email, otp }) {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/verify-otp/`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/verify-otp/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -95,7 +95,7 @@ export async function verifyEmailOtp({ email, otp }) {
   try {
     const token = Cookies.get("token");
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/verify-email-otp/`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/verify-email-otp/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -120,7 +120,7 @@ export async function getProfile() {
 
     if (!token) throw new Error("Token is missing");
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/profile`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/profile`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -151,7 +151,7 @@ export async function updateProfile(profileData) {
       headers["Content-Type"] = "application/json";
     }
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/profile`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/profile`, {
       method: "PUT",
       headers,
       credentials: "include",
@@ -179,7 +179,7 @@ export async function submitJobApplication(jobId, formData) {
     data.append("resume", formData.resume);
   }
 
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/jobApplications/apply`, {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/jobApplications/apply`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${Cookies.get("token")}`,
@@ -195,7 +195,7 @@ export async function updateEmailWithOtp(email) {
   try {
     const token = Cookies.get("token");
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/change-email`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/change-email`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -222,7 +222,7 @@ export async function changePassword(oldPassword, newPassword) {
   try {
     const token = Cookies.get("token");
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/change-password`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/change-password`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

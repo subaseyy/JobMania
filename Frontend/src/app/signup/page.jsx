@@ -48,7 +48,7 @@ export default function Signup() {
   };
 
   const handleGoogleSignup = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login/google-oauth2/?signup=true`;
+    window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/login/google-oauth2/?signup=true`;
   };
 
   return (

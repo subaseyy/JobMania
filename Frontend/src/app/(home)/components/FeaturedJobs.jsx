@@ -14,7 +14,7 @@ const FeaturedJobs = () => {
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const res = await axios.get(`${NEXT_PUBLIC_API_BASE_URL}/jobs/jobs`);
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/jobs/jobs`);
         setJobs(res.data.data || []);
       } catch (err) {
         console.error("Failed to fetch jobs:", err);
