@@ -57,7 +57,7 @@ export default function Application() {
 
       try {
         const res = await fetch(
-          `/api/jobApplications/my-applications`,
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/jobApplications/my-applications`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
